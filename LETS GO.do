@@ -1,6 +1,6 @@
 // Set WD
 
-cd "C:\Users\jonas\OneDrive - London School of Economics\Documents\LSE\GY489_Dissertation\LETS GO\Data"
+cd "C:\Users\jonas\OneDrive - London School of Economics\Documents\LSE\GY489_Dissertation\LETS GO\Dissertation-Code-Data"
 
 // Import data
 clear all
@@ -32,14 +32,17 @@ label variable ecb_spot_3m "Gov Bond Yield 3M"
 
 global explanatory co1_px_last xa1_px_last tzt1_px_last gi1_px_last vix_px_last stoxx_px_last diff_baa_aaa car1_px_last gsci_px_last ecb_spot_3m
 
+/*
 foreach var of global explanatory {
 	capture drop `var'_ln
 	gen `var'_ln = ln(`var')
 }
+*/
 
+/*
 capture drop mo1_px_settle_ln
 gen mo1_px_settle_ln = ln(mo1_px_settle)
-
+*/
 
 
 // Make dates state compatible
@@ -72,7 +75,7 @@ forvalues i=1(1)100 {
 	gen mo1_px_last_lag`i' = .
 	replace mo1_px_last_lag`i' = mo1_px_last[_n-`i']
 }
-	//capture drop mo1_px_last_lag*
+	capture drop mo1_px_last_lag*
 
 
 // Data Descriptive
@@ -90,7 +93,7 @@ global explanatory_ln co1_px_last_ln xa1_px_last_ln tzt1_px_last_ln gi1_px_last_
 global explanatory_ln_D D.co1_px_last_ln D.xa1_px_last_ln D.tzt1_px_last_ln D.gi1_px_last_ln D.vix_px_last_ln D.stoxx_px_last_ln D.diff_baa_aaa_ln D.car1_px_last_ln D.gsci_px_last_ln D.ecb_spot_3m_ln
 
 
-reg mo1_px_last $explanatory, robust
+reg mo1_px_settle $explanatory, robust
 reg mo1_px_last mo1_px_last_lag60 $explanatory, robust
 reg mo1_px_settle L60.mo1_px_last $explanatory, robust
 reg mo1_px_settle $explanatory, robust
@@ -100,17 +103,51 @@ reg D.mo1_px_settle_ln $explanatory_ln_D, robust
 
 
 // Italy coal phase-out announcement 24.10.2017
+scalar year_IT = 2017
+scalar month_IT = 10
+scalar day_IT = 24
+
+scalar event_length = 3
+scalar estimation_length = 350
+
+	// event time
 capture drop italy_announce
 gen italy_announce = .
-replace italy_announce = 1 if year == 2017 & month == 10 & day == 24
+replace italy_announce = 1 if year == year_IT & month == month_IT & day == day_IT
+
+	// event window
+capture drop italy_event_window
+gen italy_event_window = .
 summ trading_date if italy_announce == 1
-di r(mean)
-gen italy_event
+replace italy_event_window = 1 if (trading_date >= r(mean) - event_length) & (trading_date <= r(mean) + event_length)
+
+	// estimation window
+capture drop italy_estimation_window
+gen italy_estimation_window = .
+summ trading_date if italy_announce == 1
+replace italy_estimation_window = 1 if (trading_date >= r(mean) - event_length - estimation_length) & (trading_date < r(mean) - event_length)
+
+	// normal returns
+reg mo1_px_settle L.mo1_px_settle $explanatory if italy_estimation_window == 1, robust
+predict p
+capture drop normal_return_IT
+gen normal_return_IT = .
+replace normal_return_IT = p if italy_event_window == 1
+order normal_return_IT, after(mo1_px_settle)
+capture drop p
+
+	//abnormal returns
+capture drop abnormal_return_IT
+gen abnormal_return_IT = mo1_px_settle - normal_return_IT if italy_event_window == 1
+capture drop cum_abnormal_return_IT 
+gen cum_abnormal_return_IT = total(abnormal_return_IT)
+
+
 
 
 
 // Estudy command
 
-estudy 
+
 
 
