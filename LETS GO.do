@@ -104,11 +104,11 @@ reg D.mo1_px_settle_ln $explanatory_ln_D, robust
 
 // Italy coal phase-out announcement 24.10.2017
 scalar year_IT = 2017
-scalar month_IT = 10
-scalar day_IT = 24
+scalar month_IT = 11
+scalar day_IT = 16
 
 scalar event_length = 3
-scalar estimation_length = 350
+scalar estimation_length = 500
 
 	// event time
 capture drop italy_announce
@@ -129,6 +129,7 @@ replace italy_estimation_window = 1 if (trading_date >= r(mean) - event_length -
 
 	// normal returns
 reg mo1_px_settle L.mo1_px_settle $explanatory if italy_estimation_window == 1, robust
+capture drop p
 predict p
 capture drop normal_return_IT
 gen normal_return_IT = .
@@ -140,7 +141,15 @@ capture drop p
 capture drop abnormal_return_IT
 gen abnormal_return_IT = mo1_px_settle - normal_return_IT if italy_event_window == 1
 capture drop cum_abnormal_return_IT 
-gen cum_abnormal_return_IT = total(abnormal_return_IT)
+egen cum_abnormal_return_IT = total(abnormal_return_IT)
+di cum_abnormal_return_IT[1]
+
+	// test significance of 
+capture drop abnormal_return_IT_SD
+egen abnormal_return_IT_SD = sd(abnormal_return_IT)
+capture drop test_IT 
+gen test_IT = (1/sqrt(2*event_length+1))*(cum_abnormal_return_IT[1]/abnormal_return_IT_SD[1])
+di abs(test_IT[1])
 
 
 
