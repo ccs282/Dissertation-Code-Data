@@ -32,17 +32,17 @@ label variable ecb_spot_3m "Gov Bond Yield 3M"
 
 global explanatory co1_px_last xa1_px_last tzt1_px_last gi1_px_last vix_px_last stoxx_px_last diff_baa_aaa car1_px_last gsci_px_last ecb_spot_3m
 
-/*
+
 foreach var of global explanatory {
 	capture drop `var'_ln
 	gen `var'_ln = ln(`var')
 }
-*/
 
-/*
+
+
 capture drop mo1_px_settle_ln
 gen mo1_px_settle_ln = ln(mo1_px_settle)
-*/
+
 
 
 // Make dates state compatible
@@ -71,11 +71,11 @@ tsset trading_date, d
 
 	// create lagged dependent variable
 forvalues i=1(1)100 {
-	capture drop mo1_px_last_lag`i'
-	gen mo1_px_last_lag`i' = .
-	replace mo1_px_last_lag`i' = mo1_px_last[_n-`i']
+	capture drop mo1_px_settle_lag`i'
+	gen mo1_px_settle_lag`i' = .
+	replace mo1_px_settle_lag`i' = mo1_px_settle[_n-`i']
 }
-	capture drop mo1_px_last_lag*
+	//capture drop mo1_px_last_lag*
 
 
 // Data Descriptive
@@ -92,7 +92,7 @@ global explanatory_ln co1_px_last_ln xa1_px_last_ln tzt1_px_last_ln gi1_px_last_
 
 global explanatory_ln_D D.co1_px_last_ln D.xa1_px_last_ln D.tzt1_px_last_ln D.gi1_px_last_ln D.vix_px_last_ln D.stoxx_px_last_ln D.diff_baa_aaa_ln D.car1_px_last_ln D.gsci_px_last_ln D.ecb_spot_3m_ln
 
-
+/*
 reg mo1_px_settle $explanatory, robust
 reg mo1_px_last mo1_px_last_lag60 $explanatory, robust
 reg mo1_px_settle L60.mo1_px_last $explanatory, robust
@@ -100,15 +100,15 @@ reg mo1_px_settle $explanatory, robust
 
 reg mo1_px_settle $explanatory_ln_D, robust
 reg D.mo1_px_settle_ln $explanatory_ln_D, robust
-
+*/
 
 // Italy coal phase-out announcement 24.10.2017
-scalar year_IT = 2017
-scalar month_IT = 11
-scalar day_IT = 16
+scalar year_IT = 2022
+scalar month_IT = 2
+scalar day_IT = 24
 
-scalar event_length = 3
-scalar estimation_length = 500
+scalar event_length = 300
+scalar estimation_length = 1000
 
 	// event time
 capture drop italy_announce
@@ -143,6 +143,7 @@ gen abnormal_return_IT = mo1_px_settle - normal_return_IT if italy_event_window 
 capture drop cum_abnormal_return_IT 
 egen cum_abnormal_return_IT = total(abnormal_return_IT)
 di cum_abnormal_return_IT[1]
+order abnormal_return_IT, after(normal_return_IT)
 
 	// test significance of 
 capture drop abnormal_return_IT_SD
@@ -153,10 +154,43 @@ di abs(test_IT[1])
 
 
 
-
-
 // Estudy command
 
 
+// MSFE
 
+forvalues i = 0(1)9 {
+	di "-----------------------------NEXT ONE-----------------------------------"
+	di "reg 2013 + `i' to 2014 + `i'"
+	
+	reg mo1_px_settle L.mo1_px_settle $explanatory if year >= (2013 + `i') & 		year < (2014 + `i'), robust
+	estimates store reg`i'
+	
+	capture drop resids_within_`i'
+	predict double resids_within_`i' if year >= (2013 + `i') & year < (2014 + `i'), residuals
+	capture drop resids_within_sqr_`i'
+	gen resids_within_sqr_`i' = resids_within_`i'^2
+	summ resids_within_sqr_`i'
+	scalar MSFE_within_`i' = r(mean)
+	
+	capture drop resids_out_`i'
+	predict double resids_out_`i' if year > (2013 + `i'), residuals
+	capture drop resids_out_sqr_`i'
+	gen resids_out_sqr_`i' = resids_out_`i'^2
+	summ resids_out_sqr_`i'
+	scalar MSFE_out_`i' = r(mean)
+}
+
+esttab reg0 reg1 reg2 reg3 reg4
+esttab reg5 reg6 reg7 reg8 reg9
+
+
+forvalues i = 0(1)100 {
+	di "-----------------------------NEXT ONE-----------------------------------"
+	
+	reg mo1_px_settle L.mo1_px_settle $explanatory if date >= 20080401 & date <= 20090430, robust
+
+	
+	
+}
 
