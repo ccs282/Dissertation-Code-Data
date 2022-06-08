@@ -103,12 +103,13 @@ reg D.mo1_px_settle_ln $explanatory_ln_D, robust
 */
 
 // Italy coal phase-out announcement 24.10.2017
-scalar year_IT = 2013
-scalar month_IT = 4
-scalar day_IT = 16
+scalar year_IT = 2021
+scalar month_IT = 7
+scalar day_IT = 15
 
 scalar event_length = 3
-scalar estimation_length = 300
+scalar estimation_length = 1000
+scalar earliest_date = 20080314
 
 scalar reg_type = 1
 /*
@@ -135,11 +136,11 @@ replace italy_estimation_window = 1 if (trading_date >= r(mean) - event_length -
 
 	// normal returns
 if reg_type == 1 {
-	reg mo1_px_settle L.mo1_px_settle $explanatory if italy_estimation_window == 1, robust
+	reg mo1_px_settle L.mo1_px_settle $explanatory if italy_estimation_window == 1 & date >= earliest_date, robust
 }
 
 if reg_type == 2 {
-	reg mo1_px_settle D.L.mo1_px_settle_ln D.co1_px_last_ln D.xa1_px_last_ln D.tzt1_px_last_ln D.gi1_px_last_ln D.vix_px_last_ln D.stoxx_px_last_ln D.diff_baa_aaa_ln D.car1_px_last_ln D.gsci_px_last_ln if italy_estimation_window == 1, robust
+	reg mo1_px_settle L.mo1_px_settle D.co1_px_last_ln D.xa1_px_last_ln D.tzt1_px_last_ln D.gi1_px_last_ln D.vix_px_last_ln D.stoxx_px_last_ln D.diff_baa_aaa_ln D.car1_px_last_ln D.gsci_px_last_ln if italy_estimation_window == 1, robust
 }
 
 capture drop p
