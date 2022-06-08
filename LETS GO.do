@@ -75,7 +75,7 @@ forvalues i=1(1)100 {
 	gen mo1_px_settle_lag`i' = .
 	replace mo1_px_settle_lag`i' = mo1_px_settle[_n-`i']
 }
-	//capture drop mo1_px_last_lag*
+	capture drop mo1_px_settle_lag*
 
 
 // Data Descriptive
@@ -103,12 +103,18 @@ reg D.mo1_px_settle_ln $explanatory_ln_D, robust
 */
 
 // Italy coal phase-out announcement 24.10.2017
-scalar year_IT = 2022
-scalar month_IT = 2
-scalar day_IT = 24
+scalar year_IT = 2013
+scalar month_IT = 4
+scalar day_IT = 16
 
-scalar event_length = 300
-scalar estimation_length = 1000
+scalar event_length = 3
+scalar estimation_length = 300
+
+scalar reg_type = 1
+/*
+1: reg settle AR1 + explanatory
+2: reg settle D.L.AR1_ln + D.explanatory_ln; without ECB 
+*/
 
 	// event time
 capture drop italy_announce
@@ -128,7 +134,14 @@ summ trading_date if italy_announce == 1
 replace italy_estimation_window = 1 if (trading_date >= r(mean) - event_length - estimation_length) & (trading_date < r(mean) - event_length)
 
 	// normal returns
-reg mo1_px_settle L.mo1_px_settle $explanatory if italy_estimation_window == 1, robust
+if reg_type == 1 {
+	reg mo1_px_settle L.mo1_px_settle $explanatory if italy_estimation_window == 1, robust
+}
+
+if reg_type == 2 {
+	reg mo1_px_settle D.L.mo1_px_settle_ln D.co1_px_last_ln D.xa1_px_last_ln D.tzt1_px_last_ln D.gi1_px_last_ln D.vix_px_last_ln D.stoxx_px_last_ln D.diff_baa_aaa_ln D.car1_px_last_ln D.gsci_px_last_ln if italy_estimation_window == 1, robust
+}
+
 capture drop p
 predict p
 capture drop normal_return_IT
@@ -140,10 +153,16 @@ capture drop p
 	//abnormal returns
 capture drop abnormal_return_IT
 gen abnormal_return_IT = mo1_px_settle - normal_return_IT if italy_event_window == 1
+
+capture drop abnormal_return_IT_perc
+gen abnormal_return_IT_perc = abnormal_return_IT/normal_return_IT
+
 capture drop cum_abnormal_return_IT 
 egen cum_abnormal_return_IT = total(abnormal_return_IT)
 di cum_abnormal_return_IT[1]
-order abnormal_return_IT, after(normal_return_IT)
+order abnormal_return_IT abnormal_return_IT_perc, after(normal_return_IT)
+
+summ trading_date if italy_announce == 1
 
 	// test significance of 
 capture drop abnormal_return_IT_SD
@@ -151,6 +170,31 @@ egen abnormal_return_IT_SD = sd(abnormal_return_IT)
 capture drop test_IT 
 gen test_IT = (1/sqrt(2*event_length+1))*(cum_abnormal_return_IT[1]/abnormal_return_IT_SD[1])
 di abs(test_IT[1])
+
+summ abnormal_return_IT
+
+quietly summ abnormal_return_IT_perc if year == year_IT & month == month_IT & day == day_IT
+
+di"----------------------------------"
+di "change event day in %"
+quietly summ abnormal_return_IT_perc if year == year_IT & month == month_IT & day == day_IT
+di r(mean)
+di"----------------------------------"
+di "change pre-event in %"
+quietly summ trading_date if italy_announce == 1
+quietly summ abnormal_return_IT_perc if (trading_date >= r(mean) - event_length) & (trading_date < r(mean))
+di r(mean)*event_length
+di"----------------------------------"
+di "change post-event in %"
+quietly summ trading_date if italy_announce == 1
+quietly summ abnormal_return_IT_perc if (trading_date > r(mean)) & (trading_date <= r(mean) + event_length)
+di r(mean)*event_length
+di"----------------------------------"
+di "change event window in %"
+quietly summ trading_date if italy_announce == 1
+quietly summ abnormal_return_IT_perc if (trading_date >= r(mean) - event_length) & (trading_date <= r(mean) + event_length)
+di r(mean)*(2*event_length+1)
+di"----------------------------------"
 
 
 
