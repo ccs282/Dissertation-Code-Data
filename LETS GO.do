@@ -1,84 +1,62 @@
-// Set WD
+*** SET WD
 
 cd "C:\Users\jonas\OneDrive - London School of Economics\Documents\LSE\GY489_Dissertation\LETS GO\Dissertation-Code-Data"
 
-// Import data
+*** IMPORT DATA
 clear all
 import delimited "Data.csv"
 
 
-// Prep data
+*** PREP DATA
 d
+	
+	** explanatory variables 
+	local explanatory oil_last coal_last gas_last elec_last gsci vix stoxx diff_baa_aaa cer_last ecb_spot_3m
 
-label variable mo1_px_last "EUA [Last]"
-label variable mo1_px_settle "EUA [Settlememt]"
-label variable co1_px_last "European Crude [Last]"
-label variable co1_px_settle "European Crude [Settlement]"
-label variable xa1_px_last "European Coal [Last]"
-label variable xa1_px_settle "European Coal [Settlement]"
-label variable tzt1_px_last "Gas TTF [Last]"
-label variable tzt1_px_settle "Gas TTF [Settlement]"
-label variable gi1_px_last "DE/AT Base [Last]"
-label variable gi1_px_settle "DE/AT Base [Settlement]"
-label variable vix_px_last "VIX Index (volatility)"
-label variable stoxx_px_last "STOXX 600 Europe (stocks)"
-label variable aaa_px_last "Moody AAA Corp"
-label variable baa_px_last "Moody BAA Corp"
-label variable diff_baa_aaa "Credit Spread"
-label variable car1_px_last "CER CDM [last]"
-label variable car1_px_settle "CER CDM [settlement]"
-label variable gsci_px_last "GSCI (commodity)"
-label variable ecb_spot_3m "Gov Bond Yield 3M"
+	foreach var of local explanatory {
+		capture drop ln_`var'
+		gen ln_`var' = ln(`var')
+	}
 
-global explanatory co1_px_last xa1_px_last tzt1_px_last gi1_px_last vix_px_last stoxx_px_last diff_baa_aaa car1_px_last gsci_px_last ecb_spot_3m
+	local ln_explanatory ln_oil_last ln_coal_last ln_gas_last ln_elec_last ln_gsci ln_vix ln_stoxx ln_diff_baa_aaa ln_cer_last ln_ecb_spot_3m
 
-
-foreach var of global explanatory {
-	capture drop `var'_ln
-	gen `var'_ln = ln(`var')
-}
+	capture drop ln_eua_settle
+	gen ln_eua_settle = ln(eua_settle)
 
 
 
-capture drop mo1_px_settle_ln
-gen mo1_px_settle_ln = ln(mo1_px_settle)
+	** Prep time series
 
+	drop if date <= 20080314 // Koch et al. (2014)	
 
+	capture drop year month day stata_date
+	gen year = int(date/10000) 
+	gen month = int((date-year*10000)/100) 
+	gen day = int((date-year*10000-month*100)) 
+	gen stata_date = mdy(month,day,year)
+	order stata_date, after(date)
+	format stata_date  %td
 
-// Make dates state compatible
+	capture drop trading_date
+	gen trading_date = 1
+	replace trading_date = trading_date[_n-1] + 1 if _n != 1 // there are missing dates (weekends etc.)
 
-capture drop year month day stata_date
-gen year = int(date/10000) 
-gen month = int((date-year*10000)/100) 
-gen day = int((date-year*10000-month*100)) 
-gen stata_date = mdy(month,day,year)
-order stata_date, after(date)
-format stata_date  %td
+	tsset trading_date, d
 
-drop if year <= 2007
+	local D_ln_explanatory D.ln_oil_last D.ln_coal_last D.ln_gas_last D.ln_elec_last D.ln_gsci D.ln_vix D.ln_stoxx D.ln_diff_baa_aaa D.ln_cer_last D.ln_ecb_spot_3m
 
-capture drop trading_date
-gen trading_date = 1
-replace trading_date = trading_date[_n-1] + 1 if _n != 1
+	** Create lagged dependent variable
+	
+	/*
+	forvalues i=1(1)100 {
+		capture drop eua_settle_lag`i'
+		gen eua_settle_lag`i' = .
+		replace eua_settle_lag`i' = eua_settle[_n-`i']
+	}
+		//capture drop eua_settle_lag*
+	*/
 
-
-
-// prep time series
-//tsset stata_date, d
-tsset trading_date, d
-
-
-
-	// create lagged dependent variable
-forvalues i=1(1)100 {
-	capture drop mo1_px_settle_lag`i'
-	gen mo1_px_settle_lag`i' = .
-	replace mo1_px_settle_lag`i' = mo1_px_settle[_n-`i']
-}
-	capture drop mo1_px_settle_lag*
-
-
-// Data Descriptive
+*** DATA DESCRIPTIVE
 
 /*
 xcorr mo1_px_last co1_px_last 
@@ -86,11 +64,8 @@ xcorr gsci_px_last diff_baa_aaa
 xcorr tzt1_px_last co1_px_last 
 */
 
-// Returns generation
+*** GENERATE (AB)NORMAL RETURNS
 
-global explanatory_ln co1_px_last_ln xa1_px_last_ln tzt1_px_last_ln gi1_px_last_ln vix_px_last_ln stoxx_px_last_ln diff_baa_aaa_ln car1_px_last_ln gsci_px_last_ln ecb_spot_3m_ln
-
-global explanatory_ln_D D.co1_px_last_ln D.xa1_px_last_ln D.tzt1_px_last_ln D.gi1_px_last_ln D.vix_px_last_ln D.stoxx_px_last_ln D.diff_baa_aaa_ln D.car1_px_last_ln D.gsci_px_last_ln D.ecb_spot_3m_ln
 
 /*
 reg mo1_px_settle $explanatory, robust
@@ -102,8 +77,39 @@ reg mo1_px_settle $explanatory_ln_D, robust
 reg D.mo1_px_settle_ln $explanatory_ln_D, robust
 */
 
-// Italy coal phase-out announcement 24.10.2017
-scalar year_IT = 2021
+	** Define scalars/matrices
+
+		* Phase out announcements
+		
+		matrix def announce_date = (20190128, 20180915, 20200116, 20211015, .\ 20151118, 20180105, 20201214, ., .\ 20181115, 20190222, 20200120, 20210630, . \ 20171024, 20190923, ., ., . \ 20201204, 20220107, ., ., . \ 20171010, 20160923, 20180518, ., . \ 20161115, 20160426, 20170706, ., . \ 20210526, 20210603, 20220531, ., . \ 20211011, ., ., ., . \ 20190923, 20210923, 20220406, ., . \ ., ., ., ., .)
+		
+		matrix rown announce_date = 1_Germany 2_UK 3_Spain 4_Italy 5_Czech_Republic 6_Netherlands 7_France 8_Romania 9_Bulgaria 10_Greece 11_Others
+		matrix coln announce_date = Date_Pref Date2 Date3 Date4 Date5
+		
+		matrix list announce_date
+		
+		/*
+		NOTES
+		
+		Generally: 1st date is the preferred date
+		
+		1 (Germany): 
+			1st date 20190128: should be 26 Jan 2019, 28 Jan is the next trading date
+			2nd date :
+		2 (UK):
+		3 (Spain):
+		4 (Italy):
+		5 (Czech_Republic):
+		6 (Netherlands):
+		7 (France):
+		8 (Romania):
+		9 (Bulgaria):
+		10 (Greece):
+		11 (Others): 
+		
+		*/
+	
+	scalar year_IT = 2021
 scalar month_IT = 7
 scalar day_IT = 15
 
@@ -159,6 +165,7 @@ capture drop abnormal_return_IT_perc
 gen abnormal_return_IT_perc = abnormal_return_IT/normal_return_IT
 
 capture drop cum_abnormal_return_IT 
+// wouldn't sum be correct?!
 egen cum_abnormal_return_IT = total(abnormal_return_IT)
 di cum_abnormal_return_IT[1]
 order abnormal_return_IT abnormal_return_IT_perc, after(normal_return_IT)
