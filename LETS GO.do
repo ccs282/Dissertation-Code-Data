@@ -6,28 +6,61 @@ cd "C:\Users\jonas\OneDrive - London School of Economics\Documents\LSE\GY489_Dis
 clear all
 import delimited "Data.csv"
 
+/*
+Wrong Data:
+- EUA december ahead needed; currently MO1 used
+- offset prices same
+- check oil coal gas elec
+*/
+
 
 *** PREP DATA
 d
 	
 	** explanatory variables 
-	local explanatory oil_last coal_last gas_last elec_last gsci vix stoxx diff_baa_aaa cer_last ecb_spot_3m
+	global explanatory oil_last coal_last gas_last elec_last gsci vix stoxx diff_baa_aaa cer_last ecb_spot_3m
 
-	foreach var of local explanatory {
+	foreach var of global explanatory {
 		capture drop ln_`var'
 		gen ln_`var' = ln(`var')
 	}
 
-	local ln_explanatory ln_oil_last ln_coal_last ln_gas_last ln_elec_last ln_gsci ln_vix ln_stoxx ln_diff_baa_aaa ln_cer_last ln_ecb_spot_3m
+	global ln_explanatory ln_oil_last ln_coal_last ln_gas_last ln_elec_last ln_gsci ln_vix ln_stoxx ln_diff_baa_aaa ln_cer_last ln_ecb_spot_3m
 
+	foreach var of global ln_explanatory {
+		capture drop `var'_return
+		gen `var'_return = .
+		replace `var'_return = `var'[_n] - `var'[_n - 1] if _n != 1
+	}
+	
+	global ln_explanatory_return ln_oil_last_return ln_coal_last_return ln_gas_last_return ln_elec_last_return ln_gsci_return ln_vix_return ln_stoxx_return ln_diff_baa_aaa_return ln_cer_last_return ln_ecb_spot_3m_return
+	
+	capture drop aaa baa
+	
+	** explained/dependent variable
 	capture drop ln_eua_settle
 	gen ln_eua_settle = ln(eua_settle)
-
+	
+	capture drop ln_eua_settle_return
+	gen ln_eua_settle_return = .
+	replace ln_eua_settle_return = ln_eua_settle[_n] - ln_eua_settle[_n - 1] if _n != 1
+	order ln_eua_settle_return, after(eua_settle)
+	
+		* Create lagged dependent variable
+	
+		
+		forvalues i=1(1)5 {
+			capture drop ln_eua_settle_return_lag`i'
+			gen ln_eua_settle_return_lag`i' = .
+			replace ln_eua_settle_return_lag`i' = ln_eua_settle_return[_n-`i'] if _n != 1
+		}
+			//capture drop eua_settle_lag*
+		
 
 
 	** Prep time series
 
-	drop if date <= 20080314 // Koch et al. (2014)	
+	//drop if date <= 20080314 // Koch et al. (2014)	
 
 	capture drop year month day stata_date
 	gen year = int(date/10000) 
@@ -43,39 +76,55 @@ d
 
 	tsset trading_date, d
 
-	local D_ln_explanatory D.ln_oil_last D.ln_coal_last D.ln_gas_last D.ln_elec_last D.ln_gsci D.ln_vix D.ln_stoxx D.ln_diff_baa_aaa D.ln_cer_last D.ln_ecb_spot_3m
-
 	** Create lagged dependent variable
 	
 	/*
 	forvalues i=1(1)100 {
 		capture drop eua_settle_lag`i'
 		gen eua_settle_lag`i' = .
-		replace eua_settle_lag`i' = eua_settle[_n-`i']
+		replace eua_settle_lag`i' = eua_settle[_n-`i'] if _n != 1
 	}
 		//capture drop eua_settle_lag*
 	*/
 
 *** DATA DESCRIPTIVE
 
-/*
-xcorr mo1_px_last co1_px_last 
-xcorr gsci_px_last diff_baa_aaa 
-xcorr tzt1_px_last co1_px_last 
-*/
+	** mean log returns
+	
+	summ ln_eua_settle_return if date >= 20071003 & date <= 20140205 // compare to Deeney et al. (2016); mean -0.000815; SD 0.03294; min -0.43208; max 0.24525; obs 1625
+	
+	summ ln_eua_settle_return if date >= 20080324 & date <= 20121019 // compare to Kemden et al. (2016); mean −0.000866; SD 0.026732; min −0.116029; max 0.245247; obs 1194
+	
+	summ ln_eua_settle_return if date >= 20080314 & date <= 20120430 // compare to Koch et al. (2014); mean -0.23; SD 0.56; annualised values!!! for log returns, divide by 261; for SD divide by sqrt(261); assume 261 trading days (my calcuations)
+	
+		* explanatory variables
+		foreach var of global ln_explanatory_return { 
+			summ `var' if date >= 20080314 & date <= 20120430 // compare to Koch et al. (2014)
+			di "mean:"
+			di r(mean)*261
+			di "SD:"
+			di r(sd)*sqrt(261)
+		}
+		
+		
+		
+	/*count if date >= 20080314 & date <= 20090313
+	count if date >= 20090314 & date <= 20100313
+	count if date >= 20100314 & date <= 20110313
+	count if date >= 20110314 & date <= 20120313
+	count if date >= 20120314 & date <= 20130313
+	count if date >= 20130314 & date <= 20140313*/
+	
+		
+	** xcorr?
+	/*
+	xcorr mo1_px_last co1_px_last 
+	xcorr gsci_px_last diff_baa_aaa 
+	xcorr tzt1_px_last co1_px_last 
+	*/
 
 *** GENERATE (AB)NORMAL RETURNS
 
-
-/*
-reg mo1_px_settle $explanatory, robust
-reg mo1_px_last mo1_px_last_lag60 $explanatory, robust
-reg mo1_px_settle L60.mo1_px_last $explanatory, robust
-reg mo1_px_settle $explanatory, robust
-
-reg mo1_px_settle $explanatory_ln_D, robust
-reg D.mo1_px_settle_ln $explanatory_ln_D, robust
-*/
 
 	** Define scalars/matrices
 
@@ -108,99 +157,116 @@ reg D.mo1_px_settle_ln $explanatory_ln_D, robust
 		11 (Others): 
 		
 		*/
+		* Specific date
 	
-	scalar year_IT = 2021
-scalar month_IT = 7
-scalar day_IT = 15
+		scalar date_test = 20210715
 
-scalar event_length = 3
-scalar estimation_length = 1000
-scalar earliest_date = 20080314
+		* Event Study parameters
+		scalar event_length = 3 // days
+		scalar est_length = 1000 // days
+		scalar earliest_date = 20080314 // earliest date for estimation window
+		
+		scalar CAR_type = "event_window" // change to "event_window", "pre-event", "event", "post-event"
+		
+		scalar reg_type = 1 // 1: constant mean return 2: statistical market model
+		/*
+		Notes reg_type
+		1: reg EUA_settle AR1 explanatory
+		2: XXX
+		*/
 
-scalar reg_type = 1
-/*
-1: reg settle AR1 + explanatory
-2: reg settle D.L.AR1_ln + D.explanatory_ln; without ECB 
+	** Event time
+	capture drop event_date
+	gen event_date = .
+	replace event_date = 1 if date == date_test 
+
+	** Event window
+	capture drop event_window
+	gen event_window = .
+	summ trading_date if event_date == 1
+	replace event_window = 1 if (trading_date >= r(mean) - event_length) & (trading_date <= r(mean) + event_length)
+
+	** Estimation window
+	capture drop est_window
+	gen est_window = .
+	summ trading_date if event_date == 1
+	replace est_window = 1 if (trading_date >= r(mean) - event_length - est_length) & (trading_date < r(mean) - event_length)
+
+	** Normal returns
+	// probably wrong; use log returns?
+	if reg_type == 1 {
+		reg eua_settle L.eua_settle $explanatory if est_window == 1 & date >= earliest_date, robust
+	}
+
+	/*
+	reg ln_eua_settle_return L.ln_eua_settle_return $ln_explanatory_return if year > 2013 & year < 2020, robust
+	
+		reg ln_eua_settle_return L.ln_eua_settle_return if year >2013 & year < 2020, robust
 */
 
-	// event time
-capture drop italy_announce
-gen italy_announce = .
-replace italy_announce = 1 if year == year_IT & month == month_IT & day == day_IT
 
-	// event window
-capture drop italy_event_window
-gen italy_event_window = .
-summ trading_date if italy_announce == 1
-replace italy_event_window = 1 if (trading_date >= r(mean) - event_length) & (trading_date <= r(mean) + event_length)
+	// add constant mean return!!
 
-	// estimation window
-capture drop italy_estimation_window
-gen italy_estimation_window = .
-summ trading_date if italy_announce == 1
-replace italy_estimation_window = 1 if (trading_date >= r(mean) - event_length - estimation_length) & (trading_date < r(mean) - event_length)
+	/*
+	if reg_type == 2 {
+		reg mo1_px_settle L.mo1_px_settle D.co1_px_last_ln D.xa1_px_last_ln D.tzt1_px_last_ln D.gi1_px_last_ln D.vix_px_last_ln D.stoxx_px_last_ln D.diff_baa_aaa_ln D.car1_px_last_ln D.gsci_px_last_ln if italy_est_window == 1, robust
+	}
+	*/
 
-	// normal returns
-if reg_type == 1 {
-	reg mo1_px_settle L.mo1_px_settle $explanatory if italy_estimation_window == 1 & date >= earliest_date, robust
-}
+	capture drop NR
+	predict NR
+	
+	order NR, after(eua_settle) // change dependent
 
-if reg_type == 2 {
-	reg mo1_px_settle L.mo1_px_settle D.co1_px_last_ln D.xa1_px_last_ln D.tzt1_px_last_ln D.gi1_px_last_ln D.vix_px_last_ln D.stoxx_px_last_ln D.diff_baa_aaa_ln D.car1_px_last_ln D.gsci_px_last_ln if italy_estimation_window == 1, robust
-}
+	** Abnormal returns
+	capture drop AR
+	gen AR = eua_settle - NR // change dependent
 
-capture drop p
-predict p
-capture drop normal_return_IT
-gen normal_return_IT = .
-replace normal_return_IT = p if italy_event_window == 1
-order normal_return_IT, after(mo1_px_settle)
-capture drop p
+	capture drop AR_perc
+	gen AR_perc = AR/NR
+	order AR AR_perc, after(NR)
+	
+	/*
+			scalar CAR_type = "event_window" // change to "event_window", "pre-event", "event", "post-event"
+	*/
+	
+	capture drop CAR 
+	egen CAR = total(AR) if event_window == 1
+	gen CAR = sum(AR) if event_window == 1
+	di CAR[1]
 
-	//abnormal returns
-capture drop abnormal_return_IT
-gen abnormal_return_IT = mo1_px_settle - normal_return_IT if italy_event_window == 1
+	summ trading_date if italy_announce == 1
 
-capture drop abnormal_return_IT_perc
-gen abnormal_return_IT_perc = abnormal_return_IT/normal_return_IT
-
-capture drop cum_abnormal_return_IT 
-// wouldn't sum be correct?!
-egen cum_abnormal_return_IT = total(abnormal_return_IT)
-di cum_abnormal_return_IT[1]
-order abnormal_return_IT abnormal_return_IT_perc, after(normal_return_IT)
-
-summ trading_date if italy_announce == 1
-
-	// test significance of 
-capture drop abnormal_return_IT_SD
-egen abnormal_return_IT_SD = sd(abnormal_return_IT)
+	
+*** Postestimation: Test significance
+capture drop AR_SD
+egen AR_SD = sd(AR)
 capture drop test_IT 
-gen test_IT = (1/sqrt(2*event_length+1))*(cum_abnormal_return_IT[1]/abnormal_return_IT_SD[1])
+gen test_IT = (1/sqrt(2*event_length+1))*(CAR[1]/AR_SD[1])
 di abs(test_IT[1])
 
-summ abnormal_return_IT
+summ AR
 
-quietly summ abnormal_return_IT_perc if year == year_IT & month == month_IT & day == day_IT
+quietly summ AR_perc if year == year_IT & month == month_IT & day == day_IT
 
 di"----------------------------------"
 di "change event day in %"
-quietly summ abnormal_return_IT_perc if year == year_IT & month == month_IT & day == day_IT
+quietly summ AR_perc if year == year_IT & month == month_IT & day == day_IT
 di r(mean)
 di"----------------------------------"
 di "change pre-event in %"
 quietly summ trading_date if italy_announce == 1
-quietly summ abnormal_return_IT_perc if (trading_date >= r(mean) - event_length) & (trading_date < r(mean))
+quietly summ AR_perc if (trading_date >= r(mean) - event_length) & (trading_date < r(mean))
 di r(mean)*event_length
 di"----------------------------------"
 di "change post-event in %"
 quietly summ trading_date if italy_announce == 1
-quietly summ abnormal_return_IT_perc if (trading_date > r(mean)) & (trading_date <= r(mean) + event_length)
+quietly summ AR_perc if (trading_date > r(mean)) & (trading_date <= r(mean) + event_length)
 di r(mean)*event_length
 di"----------------------------------"
 di "change event window in %"
 quietly summ trading_date if italy_announce == 1
-quietly summ abnormal_return_IT_perc if (trading_date >= r(mean) - event_length) & (trading_date <= r(mean) + event_length)
+quietly summ AR_perc if (trading_date >= r(mean) - event_length) & (trading_date <= r(mean) + event_length)
 di r(mean)*(2*event_length+1)
 di"----------------------------------"
 
