@@ -39,14 +39,14 @@ Wrong Data:
 				scalar date_specific = 20110621 // determine date to be tested if test_specific_date == "yes"
 
 			* Test coal phase-out dates from matrix 
-				scalar Germany_num = 1 // 0-4
+				scalar Germany_num = 2 // 0-4
 				scalar UK_num = 0 // 0-3
 				scalar Spain_num = 1 // 0-4
 				scalar Italy_num = 1 // 0-2
 				scalar Czech_Republic_num = 1 // 0-2
 				scalar Netherlands_num = 1 // 0-3
 				scalar France_num = 1 // 0-3
-				scalar Romania_num = 2 // 0-3
+				scalar Romania_num = 1 // 0-3
 				scalar Bulgaria_num = 1 // 0-1
 				scalar Greece_num = 1 // 0-3
 				scalar Others_num = 0 // 0-?
@@ -58,12 +58,15 @@ Wrong Data:
 						
 			scalar reg_type = 1 // 1: constant mean return 2: statistical market model 3: wrong model 
 
-	** Event time
+	quietly do event_study
+
+	** Event window
 
 		if test_specific_date == "yes" {
-			capture drop event_date
-			gen event_date = .
-			replace event_date = 1 if date == date_specific 
+			capture drop event_win
+			gen event_win = .
+			summ trading_date if event_date == 1
+			replace event_win = 1 if (trading_date >= r(mean) - event_length) & (trading_date <= r(mean) + event_length)
 		}
 
 		else {
@@ -71,19 +74,15 @@ Wrong Data:
 				if `x'_num != 0 {
 					local temp = `x'_num
 					forvalues i = 1(1)`temp' {
-						capture drop event_date_`x'_`i'
-						gen event_date_`x'_`i' = .
-						replace event_date_`x'_`i' = 1 if date == announce_date[`x'_row, `i']
+						capture drop event_win_`x'_`i'
+						gen event_win_`x'_`i' = .
+						summ trading_date if event_date_`x'_`i' == 1
+						replace event_win_`x'_`i' = 1 if (trading_date >= r(mean) - event_length) & (trading_date <= r(mean) + event_length)
 					}
 				}
 			}	
+
 		}
-		
-	** Event win
-		capture drop event_win
-		gen event_win = .
-		summ trading_date if event_date == 1
-		replace event_win = 1 if (trading_date >= r(mean) - event_length) & (trading_date <= r(mean) + event_length)
 
 	** Estimation win
 		capture drop est_win
