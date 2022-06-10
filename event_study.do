@@ -115,3 +115,32 @@
 				}
 			}	
 		}
+
+	** Abnormal returns
+		if test_specific_date == "yes" {
+			capture drop AR
+			gen AR = ln_return_eua_settle - NR
+			order AR, after(NR)
+		}
+
+		else {
+			foreach x in Germany UK Spain Italy Czech_Republic Netherlands France Romania Bulgaria Greece Others {
+				if `x'_num != 0 {
+					local temp = `x'_num
+					forvalues i = 1(1)`temp' {
+						capture drop AR_`x'_`i'
+						gen AR_`x'_`i' = ln_return_eua_settle - NR_`x'_`i'
+					}
+				}
+			}	
+		}
+
+		/*
+		if reg_type == 3 {
+			gen AR = eua_settle - NR 
+			
+			capture drop AR_perc
+			gen AR_perc = AR/NR
+			order AR_perc, after(NR)
+		}
+		*/

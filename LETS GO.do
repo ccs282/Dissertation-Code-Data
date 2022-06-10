@@ -60,22 +60,8 @@ Wrong Data:
 
 	quietly do event_study
 
-	** Abnormal returns
-		capture drop AR
-
-		if reg_type == 3 {
-			gen AR = eua_settle - NR 
-			
-			capture drop AR_perc
-			gen AR_perc = AR/NR
-			order AR_perc, after(NR)
-		}
 		
-		else {
-			gen AR = ln_return_eua_settle - NR
-		}
 
-		order AR, after(NR)
 
 	** Cumulative abnormal returns
 		capture drop CAR*
