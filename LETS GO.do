@@ -55,7 +55,7 @@ Wrong Data:
 
 	** Prep time series
 
-		drop if date <= 20080314 // Koch et al. (2014)	
+		drop if date <= 20080403 // Koch et al. (2014) use 20080314; but there's a jump in EUA prices on April 2 in my data
 
 		capture drop year month day stata_date
 		gen year = int(date/10000) 
@@ -90,7 +90,7 @@ Wrong Data:
 		
 		summ ln_return_eua_settle if date >= 20080324 & date <= 20121019 // compare to Kemden et al. (2016); mean −0.000866; SD 0.026732; min −0.116029; max 0.245247; obs 1194
 		
-		summ ln_return_eua_settle if date >= 20080314 & date <= 20120430 // compare to Koch et al. (2014); mean -0.23 [-.00088123 daily]; SD 0.56 [.03466313 daily]; annualised values!!! for log returns, divide by 261; for SD divide by sqrt(261); assume 261 trading days (my calcuations)
+		summ ln_return_eua_settle if date >= 20080314 & date <= 20140430 // compare to Koch et al. (2014); mean -0.23 [-.00088123 daily]; SD 0.56 [.03466313 daily]; annualised values!!! for log returns, divide by 261; for SD divide by sqrt(261); assume 261 trading days (my calcuations)
 		di -0.23/261
 		di 0.56/sqrt(261)
 	
@@ -105,7 +105,6 @@ Wrong Data:
 			}
 		
 		
-		
 			/*count if date >= 20080314 & date <= 20090313
 			count if date >= 20090314 & date <= 20100313
 			count if date >= 20100314 & date <= 20110313
@@ -114,14 +113,6 @@ Wrong Data:
 			count if date >= 20130314 & date <= 20140313*/
 	
 		
-	** xcorr?
-	
-		/*
-		xcorr mo1_px_last co1_px_last 
-		xcorr gsci_px_last diff_baa_aaa 
-		xcorr tzt1_px_last co1_px_last 
-		*/
-
 *** GENERATE (AB)NORMAL RETURNS
 
 
@@ -158,14 +149,14 @@ Wrong Data:
 			
 		* Specific date
 	
-			scalar date_test = 20190128
+			scalar date_test = 20110621
 
 		* Event Study parameters
 			scalar event_length = 3 // days
 			scalar est_length = 1000 // days
 			scalar earliest_date = 20080314 // earliest date for estimation win
 						
-			scalar reg_type = 3 // 1: constant mean return 2: statistical market model 3: wrong model 
+			scalar reg_type = 1 // 1: constant mean return 2: statistical market model 3: wrong model 
 
 	** Event time
 		capture drop event_date
@@ -185,71 +176,77 @@ Wrong Data:
 		replace est_win = 1 if (trading_date >= r(mean) - event_length - est_length) & (trading_date < r(mean) - event_length)
 
 	** Normal returns
-	
+
+		capture drop NR
+
 		if reg_type == 1 {
+			summ ln_return_eua_settle if est_win == 1
+			gen NR = r(mean)
 		}
 
 		if reg_type == 2 {
 			reg ln_return_eua_settle L.ln_return_eua_settle $ln_return_explanatory if est_win == 1 & date >= earliest_date, robust
+			predict NR
 		}
 
 		if reg_type == 3 {
 			reg eua_settle L.eua_settle $explanatory if est_win == 1 & date >= earliest_date, robust
+			predict NR
 		}
-		
-	// add constant mean return!!
-
-		capture drop NR
-		predict NR
 		
 		order NR, after(ln_return_eua_settle) 
 
 	** Abnormal returns
+
+		capture drop AR
+
 		if reg_type == 3 {
-			capture drop AR
 			gen AR = eua_settle - NR 
 			
 			capture drop AR_perc
 			gen AR_perc = AR/NR
-			order AR AR_perc, after(NR)
+			order AR_perc, after(NR)
 		}
 		
 		else {
-			capture drop AR
 			gen AR = ln_return_eua_settle - NR
-			order AR, after(NR)
 		}
+
+		order AR, after(NR)
 
 	** Cumulative abnormal returns
 	
 		capture drop CAR*
-
+		//tempname CAR_event_win CAR_pre CAR_post CAR_event
+		
 		* Event window
-			egen CAR_event_win_ = total(AR) if event_win == 1
-			summ CAR_event_win_
+			egen CARa = total(AR) if event_win == 1
+			summ CARa, meanonly
 			scalar CAR_event_win = r(mean)
-			di CAR_event_win
-
+			
 		* Pre-event
-			egen CAR_pre_ = total(AR) if event_win == 1 & date < date_test
-			summ CAR_pre_
+			egen CARb = total(AR) if event_win == 1 & date < date_test
+			summ CARb, meanonly
 			scalar CAR_pre = r(mean)
 
 		* Post-event
-			egen CAR_post_ = total(AR) if event_win == 1 & date > date_test
-			summ CAR_post_
+			egen CARc = total(AR) if event_win == 1 & date > date_test
+			summ CARc, meanonly
 			scalar CAR_post = r(mean)
 
 		* Event Day
-			egen CAR_event_ = total(AR) if event_date == 1
-			summ CAR_event_
+			egen CARd = total(AR) if event_date == 1
+			summ CARd, meanonly
 			scalar CAR_event = r(mean)
-			di CAR_event
+		
+		capture drop CAR*
 		
 *** Postestimation: Test significance
 	
 	** Variance & SD AR (estimation win)
 	
+		summ ln_return_eua_settle if est_win == 1
+
 		capture drop AR_squared
 		capture drop TSS
 		gen AR_squared = .
@@ -291,40 +288,38 @@ Wrong Data:
 		scalar df = 950
 		scalar level = 0.05
 		scalar cv = invttail(df, level/2)
-	
+		
+		* Pre-event
+			scalar t_stat_pre = CAR_pre/SD_CAR_prepost
+			scalar p_value_pre = ttail(df ,abs(t_stat_pre))*2
+			di CAR_pre
+			di p_value_pre
+
 		* Event day
-			scalar t_stat = CAR_event/SD_CAR_event
-			di t_stat
-	
-	
-			scalar p_value = ttail(df ,abs(_b[_cons]/_se[_cons]))*2
+			scalar t_stat_event = CAR_event/SD_CAR_event
+			scalar p_value_event = ttail(df ,abs(t_stat_event))*2
+			di CAR_event
+			di p_value_event
+
+		* Post-event
+			scalar t_stat_post = CAR_post/SD_CAR_prepost
+			scalar p_value_post = ttail(df ,abs(t_stat_post))*2
+			di CAR_post
+			di p_value_post
+			
+		* Full Event window
+			scalar t_stat_event_win = CAR_event_win/SD_CAR_event_win
+			scalar p_value_event_win = ttail(df ,abs(t_stat_event_win))*2
+			di CAR_event_win
+			di p_value_event_win
 
 
 
 
 
-	quietly summ AR_perc if year == year_IT & month == month_IT & day == day_IT
 
-	di"----------------------------------"
-	di "change event day in %"
-	quietly summ AR_perc if year == year_IT & month == month_IT & day == day_IT
-	di r(mean)
-	di"----------------------------------"
-	di "change pre-event in %"
-	quietly summ trading_date if italy_announce == 1
-	quietly summ AR_perc if (trading_date >= r(mean) - event_length) & (trading_date < r(mean))
-	di r(mean)*event_length
-	di"----------------------------------"
-	di "change post-event in %"
-	quietly summ trading_date if italy_announce == 1
-	quietly summ AR_perc if (trading_date > r(mean)) & (trading_date <= r(mean) + event_length)
-	di r(mean)*event_length
-	di"----------------------------------"
-	di "change event win in %"
-	quietly summ trading_date if italy_announce == 1
-	quietly summ AR_perc if (trading_date >= r(mean) - event_length) & (trading_date <= r(mean) + event_length)
-	di r(mean)*(2*event_length+1)
-	di"----------------------------------"
+
+
 
 
 
