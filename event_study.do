@@ -67,3 +67,51 @@
 			}	
 
 		}
+
+	** Normal returns
+		if test_specific_date == "yes" {
+			capture drop NR
+
+			if reg_type == 1 {
+				summ ln_return_eua_settle if est_win == 1
+				gen NR = r(mean)
+			}
+
+			else if reg_type == 2 {
+				reg ln_return_eua_settle L.ln_return_eua_settle $ln_return_explanatory if est_win == 1 & date >= earliest_date, robust
+				predict NR
+			}
+
+			else if reg_type == 3 {
+				reg eua_settle L.eua_settle $explanatory if est_win == 1 & date >= earliest_date, robust
+				predict NR
+			}
+			
+			order NR, after(ln_return_eua_settle) 
+		}
+
+		else{
+			foreach x in Germany UK Spain Italy Czech_Republic Netherlands France Romania Bulgaria Greece Others {
+				if `x'_num != 0 {
+					local temp = `x'_num
+					forvalues i = 1(1)`temp' {
+						capture drop NR_`x'_`i'
+
+						if reg_type == 1 {
+							summ ln_return_eua_settle if est_win_`x'_`i' == 1
+							gen NR_`x'_`i' = r(mean)
+						}
+
+						else if reg_type == 2 {
+							reg ln_return_eua_settle L.ln_return_eua_settle $ln_return_explanatory if est_win_`x'_`i' == 1 & date >= earliest_date, robust
+							predict NR_`x'_`i'
+						}
+
+						else if reg_type == 3 {
+							reg eua_settle L.eua_settle $explanatory if est_win_`x'_`i' == 1 & date >= earliest_date, robust
+							predict NR_`x'_`i'
+						}
+					}
+				}
+			}	
+		}

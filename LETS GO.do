@@ -60,26 +60,6 @@ Wrong Data:
 
 	quietly do event_study
 
-	** Normal returns
-		capture drop NR
-
-		if reg_type == 1 {
-			summ ln_return_eua_settle if est_win == 1
-			gen NR = r(mean)
-		}
-
-		if reg_type == 2 {
-			reg ln_return_eua_settle L.ln_return_eua_settle $ln_return_explanatory if est_win == 1 & date >= earliest_date, robust
-			predict NR
-		}
-
-		if reg_type == 3 {
-			reg eua_settle L.eua_settle $explanatory if est_win == 1 & date >= earliest_date, robust
-			predict NR
-		}
-		
-		order NR, after(ln_return_eua_settle) 
-
 	** Abnormal returns
 		capture drop AR
 
