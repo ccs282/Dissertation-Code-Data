@@ -60,13 +60,6 @@ Wrong Data:
 
 	quietly do event_study
 
-
-	** Estimation win
-		capture drop est_win
-		gen est_win = .
-		summ trading_date if event_date == 1
-		replace est_win = 1 if (trading_date >= r(mean) - event_length - est_length) & (trading_date < r(mean) - event_length)
-
 	** Normal returns
 		capture drop NR
 
