@@ -40,13 +40,13 @@ Wrong Data:
 
 			* Test coal phase-out dates from matrix 
 				scalar Germany_num = 1 // 0-4
-				scalar UK_num = 1 // 0-3
+				scalar UK_num = 0 // 0-3
 				scalar Spain_num = 1 // 0-4
 				scalar Italy_num = 1 // 0-2
 				scalar Czech_Republic_num = 1 // 0-2
 				scalar Netherlands_num = 1 // 0-3
 				scalar France_num = 1 // 0-3
-				scalar Romania_num = 1 // 0-3
+				scalar Romania_num = 2 // 0-3
 				scalar Bulgaria_num = 1 // 0-1
 				scalar Greece_num = 1 // 0-3
 				scalar Others_num = 0 // 0-?
@@ -59,6 +59,7 @@ Wrong Data:
 			scalar reg_type = 1 // 1: constant mean return 2: statistical market model 3: wrong model 
 
 	** Event time
+
 		if test_specific_date == "yes" {
 			capture drop event_date
 			gen event_date = .
@@ -66,41 +67,18 @@ Wrong Data:
 		}
 
 		else {
-			if all_countries == "yes" {
-				if first_date_only == "yes" {
-					//
+			foreach x in Germany UK Spain Italy Czech_Republic Netherlands France Romania Bulgaria Greece Others {
+				if `x'_num != 0 {
+					local temp = `x'_num
+					forvalues i = 1(1)`temp' {
+						capture drop event_date_`x'_`i'
+						gen event_date_`x'_`i' = .
+						replace event_date_`x'_`i' = 1 if date == announce_date[`x'_row, `i']
+					}
 				}
-
-				else {
-					// 
-				}
-			}
-
-			else {
-				if first_date_only == "yes" {
-					//
-				}
-
-				else {
-					foreach x in Germany UK Spain Italy Czech_Republic Netherlands France Romania Bulgaria Greece Others {
-						if `x'_num != 0 {
-							forvalues i = 1(1)`x'_num {
-								capture drop event_date_`x'_`i'
-								gen event_date_`x'_`i' = .
-								replace event_date_`x'_`i' = 1 if date == announce_date[`x'_row, `i']
-							}
-						}
-					}	
-				}
-			}
+			}	
 		}
-
-	foreach x in Germany UK {
-		di `x'
-		scalar `x'_newwww = "actually, no"
-		di `x'_newwww
-	}
-
+		
 	** Event win
 		capture drop event_win
 		gen event_win = .
