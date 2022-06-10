@@ -14,154 +14,92 @@ Wrong Data:
 - check oil coal gas elec
 */
 
-
 *** PREP DATA
+	quietly do data_prep
+
 	d
-	
-		
-	** explanatory variables 
-	
-		global explanatory oil_last coal_last gas_last elec_last gsci vix stoxx diff_baa_aaa cer_last ecb_spot_3m
-
-		foreach var of global explanatory {
-			capture drop ln_return_`var'
-			gen ln_return_`var' = ln(`var'[_n] / `var'[_n - 1]) if _n != 1
-		}
-
-		global ln_return_explanatory ln_return_oil_last ln_return_coal_last ln_return_gas_last ln_return_elec_last ln_return_gsci ln_return_vix ln_return_stoxx ln_return_diff_baa_aaa ln_return_cer_last ln_return_ecb_spot_3m
-	
-	// transform interest rate bc of negative values?
-	
-		capture drop aaa baa
-	
-	** explained/dependent variable
-	
-		capture drop ln_return_eua_settle
-		gen ln_return_eua_settle = .
-		replace ln_return_eua_settle = ln(eua_settle[_n] / eua_settle[_n - 1]) if _n != 1
-		
-		order ln_return_eua_settle, after(eua_settle)
-	
-		* Create lagged dependent variable
-			/*
-			forvalues i=1(1)5 {
-				capture drop ln_return_eua_settle_lag`i'
-				gen ln_return_eua_settle_lag`i' = .
-				replace ln_return_eua_settle_lag`i' = ln_return_eua_settle[_n-`i'] if _n != 1
-			}
-			//capture drop eua_settle_lag*
-			*/
-
-
-	** Prep time series
-
-		drop if date <= 20080403 // Koch et al. (2014) use 20080314; but there's a jump in EUA prices on April 2 in my data
-
-		capture drop year month day stata_date
-		gen year = int(date/10000) 
-		gen month = int((date-year*10000)/100) 
-		gen day = int((date-year*10000-month*100)) 
-		gen stata_date = mdy(month,day,year)
-		order stata_date, after(date)
-		format stata_date  %td
-
-		capture drop trading_date
-		gen trading_date = 1
-		replace trading_date = trading_date[_n-1] + 1 if _n != 1 // there are missing dates (weekends etc.)
-
-		tsset trading_date, d
-
-	** Create lagged dependent variable
-	
-		/*
-		forvalues i=1(1)100 {
-			capture drop eua_settle_lag`i'
-			gen eua_settle_lag`i' = .
-			replace eua_settle_lag`i' = eua_settle[_n-`i'] if _n != 1
-		}
-			//capture drop eua_settle_lag*
-		*/
 
 *** DATA DESCRIPTIVE
-
-	** mean log returns
-	
-		summ ln_return_eua_settle if date >= 20071003 & date <= 20140205 // compare to Deeney et al. (2016); mean -0.000815; SD 0.03294; min -0.43208; max 0.24525; obs 1625
-		
-		summ ln_return_eua_settle if date >= 20080324 & date <= 20121019 // compare to Kemden et al. (2016); mean −0.000866; SD 0.026732; min −0.116029; max 0.245247; obs 1194
-		
-		summ ln_return_eua_settle if date >= 20080314 & date <= 20140430 // compare to Koch et al. (2014); mean -0.23 [-.00088123 daily]; SD 0.56 [.03466313 daily]; annualised values!!! for log returns, divide by 261; for SD divide by sqrt(261); assume 261 trading days (my calcuations)
-		di -0.23/261
-		di 0.56/sqrt(261)
-	
-		* explanatory variables
-		
-			foreach var of global ln_return_explanatory { 
-				summ `var' if date >= 20080314 & date <= 20120430 // compare to Koch et al. (2014)
-				di "mean `var':"
-				di r(mean)*261
-				di "SD `var':"
-				di r(sd)*sqrt(261)
-			}
-		
-		
-			/*count if date >= 20080314 & date <= 20090313
-			count if date >= 20090314 & date <= 20100313
-			count if date >= 20100314 & date <= 20110313
-			count if date >= 20110314 & date <= 20120313
-			count if date >= 20120314 & date <= 20130313
-			count if date >= 20130314 & date <= 20140313*/
-	
+	quietly do data_descriptive
 		
 *** GENERATE (AB)NORMAL RETURNS
-
 
 	** Define scalars/matrices
 
 		* Phase out announcements
-		
-			matrix def announce_date = (20190128, 20180915, 20200116, 20211015, .\ 20151118, 20180105, 20201214, ., .\ 20181115, 20190222, 20200120, 20210630, . \ 20171024, 20190923, ., ., . \ 20201204, 20220107, ., ., . \ 20171010, 20160923, 20180518, ., . \ 20161115, 20160426, 20170706, ., . \ 20210526, 20210603, 20220531, ., . \ 20211011, ., ., ., . \ 20190923, 20210923, 20220406, ., . \ ., ., ., ., .)
-			
-			matrix rown announce_date = 1_Germany 2_UK 3_Spain 4_Italy 5_Czech_Republic 6_Netherlands 7_France 8_Romania 9_Bulgaria 10_Greece 11_Others
-			matrix coln announce_date = Date_Pref Date2 Date3 Date4 Date5
-			
+			quietly do phase_out
+
 			matrix list announce_date
 			
-			/*
-			NOTES
+		* Which dates to analyse?
 			
-			Generally: 1st date is the preferred date
-			
-			1 (Germany): 
-				1st date 20190128: should be 26 Jan 2019, 28 Jan is the next trading date
-				2nd date :
-			2 (UK):
-			3 (Spain):
-			4 (Italy):
-			5 (Czech_Republic):
-			6 (Netherlands):
-			7 (France):
-			8 (Romania):
-			9 (Bulgaria):
-			10 (Greece):
-			11 (Others): 
-			*/
-			
-		* Specific date
-	
-			scalar date_test = 20110621
+			* Test one specific date only (independent of country exit dates)
+				scalar test_specific_date = "no" // "yes" when determining one specific date only; must be unequal "yes" when analysing countries' coal phase-outs
+
+				scalar date_specific = 20110621 // determine date to be tested if test_specific_date == "yes"
+
+			* Test coal phase-out dates from matrix 
+				scalar Germany_num = 1 // 0-4
+				scalar UK_num = 1 // 0-3
+				scalar Spain_num = 1 // 0-4
+				scalar Italy_num = 1 // 0-2
+				scalar Czech_Republic_num = 1 // 0-2
+				scalar Netherlands_num = 1 // 0-3
+				scalar France_num = 1 // 0-3
+				scalar Romania_num = 1 // 0-3
+				scalar Bulgaria_num = 1 // 0-1
+				scalar Greece_num = 1 // 0-3
+				scalar Others_num = 0 // 0-?
 
 		* Event Study parameters
-			scalar event_length = 3 // days
-			scalar est_length = 1000 // days
-			scalar earliest_date = 20080314 // earliest date for estimation win
+			scalar event_length = 3 // lenght of event window (days)
+			scalar est_length = 1000 // length of estimation window (days)
+			scalar earliest_date = 20080314 // earliest date for estimation window
 						
 			scalar reg_type = 1 // 1: constant mean return 2: statistical market model 3: wrong model 
 
 	** Event time
-		capture drop event_date
-		gen event_date = .
-		replace event_date = 1 if date == date_test 
+		if test_specific_date == "yes" {
+			capture drop event_date
+			gen event_date = .
+			replace event_date = 1 if date == date_specific 
+		}
+
+		else {
+			if all_countries == "yes" {
+				if first_date_only == "yes" {
+					//
+				}
+
+				else {
+					// 
+				}
+			}
+
+			else {
+				if first_date_only == "yes" {
+					//
+				}
+
+				else {
+					foreach x in Germany UK Spain Italy Czech_Republic Netherlands France Romania Bulgaria Greece Others {
+						if `x'_num != 0 {
+							forvalues i = 1(1)`x'_num {
+								capture drop event_date_`x'_`i'
+								gen event_date_`x'_`i' = .
+								replace event_date_`x'_`i' = 1 if date == announce_date[`x'_row, `i']
+							}
+						}
+					}	
+				}
+			}
+		}
+
+	foreach x in Germany UK {
+		di `x'
+		scalar `x'_newwww = "actually, no"
+		di `x'_newwww
+	}
 
 	** Event win
 		capture drop event_win
@@ -176,7 +114,6 @@ Wrong Data:
 		replace est_win = 1 if (trading_date >= r(mean) - event_length - est_length) & (trading_date < r(mean) - event_length)
 
 	** Normal returns
-
 		capture drop NR
 
 		if reg_type == 1 {
@@ -197,7 +134,6 @@ Wrong Data:
 		order NR, after(ln_return_eua_settle) 
 
 	** Abnormal returns
-
 		capture drop AR
 
 		if reg_type == 3 {
@@ -215,7 +151,6 @@ Wrong Data:
 		order AR, after(NR)
 
 	** Cumulative abnormal returns
-	
 		capture drop CAR*
 		//tempname CAR_event_win CAR_pre CAR_post CAR_event
 		
@@ -225,12 +160,12 @@ Wrong Data:
 			scalar CAR_event_win = r(mean)
 			
 		* Pre-event
-			egen CARb = total(AR) if event_win == 1 & date < date_test
+			egen CARb = total(AR) if event_win == 1 & date < date_specific
 			summ CARb, meanonly
 			scalar CAR_pre = r(mean)
 
 		* Post-event
-			egen CARc = total(AR) if event_win == 1 & date > date_test
+			egen CARc = total(AR) if event_win == 1 & date > date_specific
 			summ CARc, meanonly
 			scalar CAR_post = r(mean)
 
@@ -244,7 +179,6 @@ Wrong Data:
 *** Postestimation: Test significance
 	
 	** Variance & SD AR (estimation win)
-	
 		summ ln_return_eua_settle if est_win == 1
 
 		capture drop AR_squared
