@@ -59,36 +59,7 @@ Wrong Data:
 			scalar reg_type = 1 // 1: constant mean return 2: statistical market model 3: wrong model 
 
 	quietly do event_study
-
-		
-
-
-	** Cumulative abnormal returns
-		capture drop CAR*
-		//tempname CAR_event_win CAR_pre CAR_post CAR_event
-		
-		* Event window
-			egen CARa = total(AR) if event_win == 1
-			summ CARa, meanonly
-			scalar CAR_event_win = r(mean)
-			
-		* Pre-event
-			egen CARb = total(AR) if event_win == 1 & date < date_specific
-			summ CARb, meanonly
-			scalar CAR_pre = r(mean)
-
-		* Post-event
-			egen CARc = total(AR) if event_win == 1 & date > date_specific
-			summ CARc, meanonly
-			scalar CAR_post = r(mean)
-
-		* Event Day
-			egen CARd = total(AR) if event_date == 1
-			summ CARd, meanonly
-			scalar CAR_event = r(mean)
-		
-		capture drop CAR*
-		
+	
 *** Postestimation: Test significance
 	
 	** Variance & SD AR (estimation win)

@@ -144,3 +144,63 @@
 			order AR_perc, after(NR)
 		}
 		*/
+
+	** Cumulative abnormal returns
+
+		if test_specific_date == "yes" {
+			capture drop CAR*
+			//tempname CAR_event_win CAR_pre CAR_post CAR_event
+			
+			* Event window
+				egen CARa = total(AR) if event_win == 1
+				summ CARa, meanonly
+				scalar CAR_event_win = r(mean)
+				
+			* Pre-event
+				egen CARb = total(AR) if event_win == 1 & date < date_specific
+				summ CARb, meanonly
+				scalar CAR_pre = r(mean)
+
+			* Post-event
+				egen CARc = total(AR) if event_win == 1 & date > date_specific
+				summ CARc, meanonly
+				scalar CAR_post = r(mean)
+
+			* Event Day
+				egen CARd = total(AR) if event_date == 1
+				summ CARd, meanonly
+				scalar CAR_event = r(mean)
+			
+			capture drop CAR*
+		}
+
+		else {
+			foreach x in Germany UK Spain Italy Czech_Republic Netherlands France Romania Bulgaria Greece Others {
+				if `x'_num != 0 {
+					local temp = `x'_num
+					forvalues i = 1(1)`temp' {
+						* Event window
+							egen CARa = total(AR_`x'_`i') if event_win_`x'_`i' == 1
+							summ CARa, meanonly
+							scalar CAR_event_win_`x'_`i' = r(mean)
+							
+						* Pre-event
+							egen CARb = total(AR_`x'_`i') if event_win_`x'_`i' == 1 & date < event_date_`x'_`i'
+							summ CARb, meanonly
+							scalar CAR_pre_`x'_`i' = r(mean)
+
+						* Post-event
+							egen CARc = total(AR_`x'_`i') if event_win_`x'_`i' == 1 & date > event_date_`x'_`i'
+							summ CARc, meanonly
+							scalar CAR_post_`x'_`i' = r(mean)
+
+						* Event Day
+							egen CARd = total(AR_`x'_`i') if event_date_`x'_`i' == 1
+							summ CARd, meanonly
+							scalar CAR_event_`x'_`i' = r(mean)
+						
+						capture drop CAR*
+					}
+				}
+			}	
+		}
