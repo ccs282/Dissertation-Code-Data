@@ -158,38 +158,31 @@ Wrong Data:
 			
 		* Specific date
 	
-			scalar date_test = 20210715
+			scalar date_test = 20190128
 
 		* Event Study parameters
 			scalar event_length = 3 // days
 			scalar est_length = 1000 // days
-			scalar earliest_date = 20080314 // earliest date for estimation window
-			
-			scalar CAR_type = "event_window" // change to "event_window", "pre-event", "event", "post-event"
-			
+			scalar earliest_date = 20080314 // earliest date for estimation win
+						
 			scalar reg_type = 3 // 1: constant mean return 2: statistical market model 3: wrong model 
-			/*
-			Notes reg_type
-			1: reg EUA_settle AR1 explanatory
-			2: XXX
-			*/
 
 	** Event time
 		capture drop event_date
 		gen event_date = .
 		replace event_date = 1 if date == date_test 
 
-	** Event window
-		capture drop event_window
-		gen event_window = .
+	** Event win
+		capture drop event_win
+		gen event_win = .
 		summ trading_date if event_date == 1
-		replace event_window = 1 if (trading_date >= r(mean) - event_length) & (trading_date <= r(mean) + event_length)
+		replace event_win = 1 if (trading_date >= r(mean) - event_length) & (trading_date <= r(mean) + event_length)
 
-	** Estimation window
-		capture drop est_window
-		gen est_window = .
+	** Estimation win
+		capture drop est_win
+		gen est_win = .
 		summ trading_date if event_date == 1
-		replace est_window = 1 if (trading_date >= r(mean) - event_length - est_length) & (trading_date < r(mean) - event_length)
+		replace est_win = 1 if (trading_date >= r(mean) - event_length - est_length) & (trading_date < r(mean) - event_length)
 
 	** Normal returns
 	
@@ -197,12 +190,11 @@ Wrong Data:
 		}
 
 		if reg_type == 2 {
-			reg ln_return_eua_settle L.ln_return_eua_settle $ln_return_explanatory if est_window == 1 & date >= earliest_date, robust
+			reg ln_return_eua_settle L.ln_return_eua_settle $ln_return_explanatory if est_win == 1 & date >= earliest_date, robust
 		}
 
-		
 		if reg_type == 3 {
-			reg eua_settle L.eua_settle $explanatory if est_window == 1 & date >= earliest_date, robust
+			reg eua_settle L.eua_settle $explanatory if est_win == 1 & date >= earliest_date, robust
 		}
 		
 	// add constant mean return!!
@@ -230,67 +222,86 @@ Wrong Data:
 
 	** Cumulative abnormal returns
 	
-		capture drop CAR 
-		
-		if CAR_type == "event_window" {
-			egen CAR = total(AR) if event_window == 1
-			summ CAR
-			scalar CAR = r(mean)
-		}
-		
-		if CAR_type == "pre-event" {
-			egen CAR = total(AR) if event_window == 1 & date <= event_date
-			summ CAR
-			scalar CAR = r(mean)
-		}
+		capture drop CAR*
 
-		if CAR_type == "event" {
-			egen CAR = total(AR) if event_date == 1
-			summ CAR
-			scalar CAR = r(mean)
-		}
+		* Event window
+			egen CAR_event_win_ = total(AR) if event_win == 1
+			summ CAR_event_win_
+			scalar CAR_event_win = r(mean)
+			di CAR_event_win
 
-		if CAR_type == "post-event" {
-			egen CAR = total(AR) if event_window == 1 & date >= event_date
-			summ CAR
-			scalar CAR = r(mean)
-		}
-		
+		* Pre-event
+			egen CAR_pre_ = total(AR) if event_win == 1 & date < date_test
+			summ CAR_pre_
+			scalar CAR_pre = r(mean)
 
-		summ trading_date if italy_announce == 1
-		
+		* Post-event
+			egen CAR_post_ = total(AR) if event_win == 1 & date > date_test
+			summ CAR_post_
+			scalar CAR_post = r(mean)
+
+		* Event Day
+			egen CAR_event_ = total(AR) if event_date == 1
+			summ CAR_event_
+			scalar CAR_event = r(mean)
+			di CAR_event
 		
 *** Postestimation: Test significance
 	
-	** Variance & SD AR (estimation window)
+	** Variance & SD AR (estimation win)
 	
-	capture drop AR_squared
-	capture drop TSS
-	gen AR_squared = .
-	replace AR_squared = AR^2 if est_window == 1
-	egen TSS = total(AR_squared) if est_window == 1
-	summ TSS
-	scalar TSS_aux = r(mean)	
-	summ trading_date if est_window == 1
-	scalar var_AR = (1/(r(max)-r(min)-2))*TSS_aux
-	scalar SD_AR = sqrt(var_AR)
-	capture drop AR_squared TSS 
-	di var_AR
-	di SD_AR
+		capture drop AR_squared
+		capture drop TSS
+		gen AR_squared = .
+		replace AR_squared = AR^2 if est_win == 1
+		egen TSS = total(AR_squared) if est_win == 1
+		summ TSS
+		scalar TSS_aux = r(mean)
+		summ trading_date if est_win == 1
+		scalar var_AR = (1/(r(max)-r(min)-2))*TSS_aux
+		scalar SD_AR = sqrt(var_AR)
+		capture drop AR_squared TSS 
+		di var_AR
+		di SD_AR
 	
 	** Variance & SD CAR (event window)
-	
+
+		* Full Event window
+			scalar var_CAR_event_win = (2*event_length+1)*var_AR
+			scalar SD_CAR_event_win = sqrt(var_CAR_event_win)
+			di var_CAR_event_win
+			di SD_CAR_event_win
+
+		* Pre-event & Post-event
+			scalar var_CAR_prepost = event_length*var_AR
+			scalar SD_CAR_prepost = sqrt(var_CAR_prepost)
+			di var_CAR_prepost
+			di SD_CAR_prepost
+
+		* Event Day
+			scalar var_CAR_event = var_AR
+			scalar SD_CAR_event = sqrt(var_CAR_event)
+			di var_CAR_event
+			di SD_CAR_event
+
 	** Variance & SD avg CAR (event window; across different dates)
 	
 	
+	** Test statistical significance
+		scalar df = 950
+		scalar level = 0.05
+		scalar cv = invttail(df, level/2)
 	
-	capture drop AR_SD
-	egen AR_SD = sd(AR)
-	capture drop test_IT 
-	gen test_IT = (1/sqrt(2*event_length+1))*(CAR[1]/AR_SD[1])
-	di abs(test_IT[1])
+		* Event day
+			scalar t_stat = CAR_event/SD_CAR_event
+			di t_stat
+	
+	
+			scalar p_value = ttail(df ,abs(_b[_cons]/_se[_cons]))*2
 
-	summ AR
+
+
+
 
 	quietly summ AR_perc if year == year_IT & month == month_IT & day == day_IT
 
@@ -309,7 +320,7 @@ Wrong Data:
 	quietly summ AR_perc if (trading_date > r(mean)) & (trading_date <= r(mean) + event_length)
 	di r(mean)*event_length
 	di"----------------------------------"
-	di "change event window in %"
+	di "change event win in %"
 	quietly summ trading_date if italy_announce == 1
 	quietly summ AR_perc if (trading_date >= r(mean) - event_length) & (trading_date <= r(mean) + event_length)
 	di r(mean)*(2*event_length+1)
