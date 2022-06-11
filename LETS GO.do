@@ -36,7 +36,7 @@ Wrong Data:
 			* Test one specific date only (independent of country exit dates)
 				scalar test_specific_date = "no" // "yes" when determining one specific date only; must be unequal "yes" when analysing countries' coal phase-outs
 
-				scalar date_specific = 20110621 // determine date to be tested if test_specific_date == "yes"
+				scalar date_specific = 20190128 // determine date to be tested if test_specific_date == "yes"
 
 			* Test coal phase-out dates from matrix 
 				scalar Germany_num = 2 // 0-4
@@ -59,7 +59,8 @@ Wrong Data:
 			scalar reg_type = 1 // 1: constant mean return 2: statistical market model 3: wrong model 
 
 	quietly do event_study
-	
+	//scalar list
+
 *** Postestimation: Test significance
 	
 	** Variance & SD AR (estimation win)

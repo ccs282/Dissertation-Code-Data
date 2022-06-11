@@ -1,4 +1,6 @@
-	
+
+// CHANGE TO MAKE COUNTRY_NAME COME FIRST
+
     ** Event time
 
 		if test_specific_date == "yes" {
@@ -182,30 +184,32 @@
 							egen CARa = total(AR_`x'_`i') if event_win_`x'_`i' == 1
 							summ CARa, meanonly
 							scalar CAR_event_win_`x'_`i' = r(mean)
-							
+							di "CAR_event_win_`x'_`i'"
+	
 						* Pre-event
-							egen CARb = total(AR_`x'_`i') if event_win_`x'_`i' == 1 & date < event_date_`x'_`i'
+							summ date if event_date_`x'_`i' == 1, meanonly
+							egen CARb = total(AR_`x'_`i') if event_win_`x'_`i' == 1 & date < `r(mean)'
 							summ CARb, meanonly
 							scalar CAR_pre_`x'_`i' = r(mean)
-
-//// POST WRONG????????
+							di "CAR_pre_`x'_`i'"
 
 						* Post-event
-							egen CARc = total(AR_`x'_`i') if event_win_`x'_`i' == 1 & date > event_date_`x'_`i'
+							summ date if event_date_`x'_`i' == 1, meanonly
+							egen CARc = total(AR_`x'_`i') if event_win_`x'_`i' == 1 & date > `r(mean)'
 							summ CARc, meanonly
 							scalar CAR_post_`x'_`i' = r(mean)
+							di"CAR_post_`x'_`i'"
 
 						* Event Day
 							egen CARd = total(AR_`x'_`i') if event_date_`x'_`i' == 1
 							summ CARd, meanonly
 							scalar CAR_event_`x'_`i' = r(mean)
-						
+							di "CAR_event_`x'_`i'"
+
 						capture drop CAR*
 					}
 				}
 			}
-
-// EVENT DAY AND POST IDENTICAL?????????????????????
 
             * Average CAR across dates and countries
                 scalar N = Germany_num + UK_num + Spain_num + Italy_num + Czech_Republic_num + Netherlands_num + France_num + Romania_num + Bulgaria_num + Greece_num + Others_num
@@ -240,8 +244,34 @@
                     scalar CAR_post_avg = var_CAR_post_avg[1]
                     capture drop var_*
                     
-
 				* Event Day
+				    foreach x in Germany UK Spain Italy Czech_Republic Netherlands France Romania Bulgaria Greece Others {
+                        if `x'_num != 0 {
+                            local temp = `x'_num
+                            forvalues i = 1(1)`temp' {
+                                capture drop var_CAR_event_`x'_`i'
+                                gen var_CAR_event_`x'_`i' = CAR_event_`x'_`i'
+                            }
+                        }
+			        }
+
+                    egen var_CAR_event_avg = rowmean(var_CAR*)
+                    scalar CAR_event_avg = var_CAR_event_avg[1]
+                    capture drop var_*
+
                 * Event window
+				    foreach x in Germany UK Spain Italy Czech_Republic Netherlands France Romania Bulgaria Greece Others {
+                        if `x'_num != 0 {
+                            local temp = `x'_num
+                            forvalues i = 1(1)`temp' {
+                                capture drop var_CAR_ew_`x'_`i'
+                                gen var_CAR_ew_`x'_`i' = CAR_event_win_`x'_`i'
+                            }
+                        }
+			        }
+
+                    egen var_CAR_ew_avg = rowmean(var_CAR*)
+                    scalar CAR_event_win_avg = var_CAR_ew_avg[1]
+                    capture drop var_*
 
 		}
