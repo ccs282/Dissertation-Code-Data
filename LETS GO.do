@@ -59,26 +59,17 @@ Wrong Data:
 			scalar reg_type = 1 // 1: constant mean return 2: statistical market model 3: wrong model 
 
 	quietly do event_study
-	//scalar list
 
 *** Postestimation: Test significance
-	
-	** Variance & SD AR (estimation win)
-		summ ln_return_eua_settle if est_win == 1
+	quietly do post_estimation
+	scalar list
 
-		capture drop AR_squared
-		capture drop TSS
-		gen AR_squared = .
-		replace AR_squared = AR^2 if est_win == 1
-		egen TSS = total(AR_squared) if est_win == 1
-		summ TSS
-		scalar TSS_aux = r(mean)
-		summ trading_date if est_win == 1
-		scalar var_AR = (1/(r(max)-r(min)-2))*TSS_aux
-		scalar SD_AR = sqrt(var_AR)
-		capture drop AR_squared TSS 
-		di var_AR
-		di SD_AR
+	
+	
+	
+	
+	
+	
 	
 	** Variance & SD CAR (event window)
 
@@ -101,7 +92,7 @@ Wrong Data:
 			di SD_CAR_event
 
 	** Variance & SD avg CAR (event window; across different dates)
-	
+		//
 	
 	** Test statistical significance
 		scalar df = 950
