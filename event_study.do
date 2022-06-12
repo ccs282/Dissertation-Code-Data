@@ -1,74 +1,12 @@
 
 // CHANGE TO MAKE COUNTRY_NAME COME FIRST
 
+    ** Event time
+
 		if test_specific_date == "yes" {
-			** Event time
-				capture drop event_date
-				gen event_date = .
-				replace event_date = 1 if date == date_specific 
-
-			** Event window
-				capture drop event_win
-				gen event_win = .
-				summ trading_date if event_date == 1
-				replace event_win = 1 if (trading_date >= r(mean) - event_length) & (trading_date <= r(mean) + event_length)
-
-			** Estimation win
-				capture drop est_win
-				gen est_win = .
-				summ trading_date if event_date == 1
-				replace est_win = 1 if (trading_date >= r(mean) - event_length - est_length) & (trading_date < r(mean) - event_length)
-
-			** Normal returns
-				capture drop NR
-
-				if reg_type == 1 {
-					summ ln_return_eua_settle if est_win == 1
-					gen NR = r(mean)
-				}
-
-				else if reg_type == 2 {
-					reg ln_return_eua_settle L.ln_return_eua_settle $ln_return_explanatory if est_win == 1 & date >= earliest_date, robust
-					predict NR
-				}
-
-				else if reg_type == 3 {
-					reg eua_settle L.eua_settle $explanatory if est_win == 1 & date >= earliest_date, robust
-					predict NR
-				}
-				
-				order NR, after(ln_return_eua_settle)
-
-			** Abnormal returns
-				capture drop AR
-				gen AR = ln_return_eua_settle - NR
-				order AR, after(NR)
-
-			** Cumulative abnormal returns
-				capture drop CAR*
-				//tempname CAR_event_win CAR_pre CAR_post CAR_event
-			
-				* Event window
-					egen CARa = total(AR) if event_win == 1
-					summ CARa, meanonly
-					scalar CAR_event_win = r(mean)
-					
-				* Pre-event
-					egen CARb = total(AR) if event_win == 1 & date < date_specific
-					summ CARb, meanonly
-					scalar CAR_pre = r(mean)
-
-				* Post-event
-					egen CARc = total(AR) if event_win == 1 & date > date_specific
-					summ CARc, meanonly
-					scalar CAR_post = r(mean)
-
-				* Event Day
-					egen CARd = total(AR) if event_date == 1
-					summ CARd, meanonly
-					scalar CAR_event = r(mean)
-			
-			capture drop CAR*
+			capture drop event_date
+			gen event_date = .
+			replace event_date = 1 if date == date_specific 
 		}
 
 		else {
@@ -76,78 +14,14 @@
 				if `x'_num != 0 {
 					local temp = `x'_num
 					forvalues i = 1(1)`temp' {
-						** Event time
-							capture drop event_date_`x'_`i'
-							gen event_date_`x'_`i' = .
-							replace event_date_`x'_`i' = 1 if date == announce_date[`x'_row, `i']
-
-						** Event window
-							capture drop event_win_`x'_`i'
-							gen event_win_`x'_`i' = .
-							summ trading_date if event_date_`x'_`i' == 1
-							replace event_win_`x'_`i' = 1 if (trading_date >= r(mean) - event_length) & (trading_date <= r(mean) + event_length)
-
-						** Estimation window
-							capture drop est_win_`x'_`i'
-							gen est_win_`x'_`i' = .
-							summ trading_date if event_date_`x'_`i' == 1
-							replace est_win_`x'_`i' = 1 if (trading_date >= r(mean) - event_length - est_length) & (trading_date < r(mean) - event_length)
-
-						** Normal returns
-							capture drop NR_`x'_`i'
-
-							if reg_type == 1 {
-								summ ln_return_eua_settle if est_win_`x'_`i' == 1
-								gen NR_`x'_`i' = r(mean)
-							}
-
-							else if reg_type == 2 {
-								reg ln_return_eua_settle L.ln_return_eua_settle $ln_return_explanatory if est_win_`x'_`i' == 1 & date >= earliest_date, robust
-								predict NR_`x'_`i'
-							}
-
-							else if reg_type == 3 {
-								reg eua_settle L.eua_settle $explanatory if est_win_`x'_`i' == 1 & date >= earliest_date, robust
-								predict NR_`x'_`i'
-						
-						** Abnormal returns
-							capture drop AR_`x'_`i'
-							gen AR_`x'_`i' = ln_return_eua_settle - NR_`x'_`i'
-
-						** Cumulative abnormal returns
-							* Event window
-							egen CARa = total(AR_`x'_`i') if event_win_`x'_`i' == 1
-							summ CARa, meanonly
-							scalar CAR_event_win_`x'_`i' = r(mean)
-							di "CAR_event_win_`x'_`i'"
-	
-							* Pre-event
-								summ date if event_date_`x'_`i' == 1, meanonly
-								egen CARb = total(AR_`x'_`i') if event_win_`x'_`i' == 1 & date < `r(mean)'
-								summ CARb, meanonly
-								scalar CAR_pre_`x'_`i' = r(mean)
-								di "CAR_pre_`x'_`i'"
-
-							* Post-event
-								summ date if event_date_`x'_`i' == 1, meanonly
-								egen CARc = total(AR_`x'_`i') if event_win_`x'_`i' == 1 & date > `r(mean)'
-								summ CARc, meanonly
-								scalar CAR_post_`x'_`i' = r(mean)
-								di"CAR_post_`x'_`i'"
-
-							* Event Day
-								egen CARd = total(AR_`x'_`i') if event_date_`x'_`i' == 1
-								summ CARd, meanonly
-								scalar CAR_event_`x'_`i' = r(mean)
-								di "CAR_event_`x'_`i'"
-
-							capture drop CAR*
+						capture drop event_date_`x'_`i'
+						gen event_date_`x'_`i' = .
+						replace event_date_`x'_`i' = 1 if date == announce_date[`x'_row, `i']
 					}
 				}
 			}	
 		}
 
-/*
 	** Event window
 
 		if test_specific_date == "yes" {
@@ -336,7 +210,7 @@
 					}
 				}
 			}
-*/
+
             * Average CAR across dates and countries
                 scalar N = Germany_num + UK_num + Spain_num + Italy_num + Czech_Republic_num + Netherlands_num + France_num + Romania_num + Bulgaria_num + Greece_num + Others_num
 
