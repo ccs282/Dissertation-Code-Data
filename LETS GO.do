@@ -37,7 +37,7 @@ Wrong Data:
 			* Test one specific date only (independent of country exit dates)
 				scalar test_specific_date = "no" // "yes" when determining one specific date only; must be unequal "yes" when analysing countries' coal phase-outs
 
-				scalar date_specific = 20140416 // determine date to be tested if test_specific_date == "yes"
+				scalar date_specific = 20130416 // determine date to be tested if test_specific_date == "yes"
 
 			* Test coal phase-out dates from matrix 
 				scalar Germany_num = 2 // 0-4
@@ -53,7 +53,9 @@ Wrong Data:
 				scalar Others_num = 0 // 0-?
 
 		* Event Study parameters
-			scalar event_length = 3 // lenght of event window (days)
+			scalar event_length_pre = 3 // length of event window pre event (days)
+			scalar event_length_post = 3 // length of event window post event (days)
+
 			scalar est_length = 1000 // length of estimation window (days)
 			scalar earliest_date = 20080314 // earliest date for estimation window
 						
@@ -63,8 +65,9 @@ Wrong Data:
 
 *** Postestimation: Test significance
 	quietly do post_estimation
-	scalar list
 	quietly do significance
+	scalar list
+
 		
 
 

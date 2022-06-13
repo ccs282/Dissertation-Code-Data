@@ -28,7 +28,7 @@
 			capture drop ew
 			gen ew = .
 			summ trading_date if event_date == 1
-			replace ew = 1 if (trading_date >= r(mean) - event_length) & (trading_date <= r(mean) + event_length)
+			replace ew = 1 if (trading_date >= r(mean) - event_length_pre) & (trading_date <= r(mean) + event_length_post)
 		}
 
 		else {
@@ -39,7 +39,7 @@
 						capture drop ew_`x'_`i'
 						gen ew_`x'_`i' = .
 						summ trading_date if event_date_`x'_`i' == 1
-						replace ew_`x'_`i' = 1 if (trading_date >= r(mean) - event_length) & (trading_date <= r(mean) + event_length)
+						replace ew_`x'_`i' = 1 if (trading_date >= r(mean) - event_length_pre) & (trading_date <= r(mean) + event_length_post)
 					}
 				}
 			}	
@@ -51,7 +51,7 @@
 			capture drop est_win
 			gen est_win = .
 			summ trading_date if event_date == 1
-			replace est_win = 1 if (trading_date >= r(mean) - event_length - est_length) & (trading_date < r(mean) - event_length)
+			replace est_win = 1 if (trading_date >= r(mean) - event_length_pre - est_length) & (trading_date < r(mean) - event_length_pre)
 		}
 
 		else {
@@ -62,7 +62,7 @@
 						capture drop est_win_`x'_`i'
 						gen est_win_`x'_`i' = .
 						summ trading_date if event_date_`x'_`i' == 1
-						replace est_win_`x'_`i' = 1 if (trading_date >= r(mean) - event_length - est_length) & (trading_date < r(mean) - event_length)
+						replace est_win_`x'_`i' = 1 if (trading_date >= r(mean) - event_length_pre - est_length) & (trading_date < r(mean) - event_length_pre)
 					}
 				}
 			}	

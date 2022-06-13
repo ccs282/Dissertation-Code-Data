@@ -41,16 +41,16 @@
 	** Variance & SD CAR (event window)
 		if test_specific_date == "yes" {
             * Full Event window
-                scalar var_CAR_ew = (2*event_length+1)*var_AR
+                scalar var_CAR_ew = (event_length_pre + event_length_post+1)*var_AR
                 scalar SD_CAR_ew = sqrt(var_CAR_ew)
 
             * Pre-event
-                scalar var_CAR_pre = event_length*var_AR
+                scalar var_CAR_pre = event_length_pre*var_AR
                 scalar SD_CAR_pre = sqrt(var_CAR_pre)
 
             * Post-event
-                scalar var_CAR_post = var_CAR_pre
-                scalar SD_CAR_post = SD_CAR_pre
+                scalar var_CAR_post = event_length_post*var_AR
+                scalar SD_CAR_post = sqrt(var_CAR_post)
 
             * Event Day
                 scalar var_CAR_event = var_AR
@@ -63,16 +63,16 @@
 					local temp = `x'_num
 					forvalues i = 1(1)`temp' {
                         * Full Event window
-                            scalar var_CAR_ew_`x'_`i' = (2*event_length+1)*var_AR_`x'_`i'
+                            scalar var_CAR_ew_`x'_`i' = (event_length_pre + event_length_post+1)*var_AR_`x'_`i'
                             scalar SD_CAR_ew_`x'_`i' = sqrt(var_CAR_ew_`x'_`i')
 
                         * Pre-event
-                            scalar var_CAR_pre_`x'_`i' = event_length*var_AR_`x'_`i'
+                            scalar var_CAR_pre_`x'_`i' = event_length_pre*var_AR_`x'_`i'
                             scalar SD_CAR_pre_`x'_`i' = sqrt(var_CAR_pre_`x'_`i')
 
                         * Post-event 
-                            scalar var_CAR_post_`x'_`i' = var_CAR_pre_`x'_`i'
-                            scalar SD_CAR_post_`x'_`i' = SD_CAR_pre_`x'_`i'
+                            scalar var_CAR_post_`x'_`i' = event_length_post*var_AR_`x'_`i'
+                            scalar SD_CAR_post_`x'_`i' = sqrt(var_CAR_post_`x'_`i')
 
                         * Event Day
                             scalar var_CAR_event_`x'_`i' = var_AR_`x'_`i'
