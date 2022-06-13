@@ -61,36 +61,9 @@ Wrong Data:
 	quietly do event_study
 
 *** Postestimation: Test significance
-	quietly do post_estimation
+	do post_estimation
 	scalar list
-
 	
-	
-	
-	
-	
-	
-	
-	** Variance & SD CAR (event window)
-
-		* Full Event window
-			scalar var_CAR_event_win = (2*event_length+1)*var_AR
-			scalar SD_CAR_event_win = sqrt(var_CAR_event_win)
-			di var_CAR_event_win
-			di SD_CAR_event_win
-
-		* Pre-event & Post-event
-			scalar var_CAR_prepost = event_length*var_AR
-			scalar SD_CAR_prepost = sqrt(var_CAR_prepost)
-			di var_CAR_prepost
-			di SD_CAR_prepost
-
-		* Event Day
-			scalar var_CAR_event = var_AR
-			scalar SD_CAR_event = sqrt(var_CAR_event)
-			di var_CAR_event
-			di SD_CAR_event
-
 	** Variance & SD avg CAR (event window; across different dates)
 		//
 	
