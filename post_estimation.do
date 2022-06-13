@@ -77,13 +77,12 @@
                         * Event Day
                             scalar var_CAR_event_`x'_`i' = var_AR_`x'_`i'
                             scalar SD_CAR_event_`x'_`i' = sqrt(var_CAR_event_`x'_`i')
-
 					}
 				}
 			}
         }
 
-    ** Variance & SD avg CAR (event window; across different dates)
+    ** Variance & SD average CAR (event window; across different dates)
 		
 		if test_specific_date != "yes" {
             * Pre-event
@@ -98,14 +97,28 @@
 			    }
 
                 egen v_var_CAR_pre_sum = rowtotal(v_*)
-                scalar var_CAR_pre_avg = v_var_CAR_pre_sum[1]/N^2
+                scalar var_CAR_pre_avg = v_var_CAR_pre_sum[1]/No^2
                 scalar SD_CAR_pre_avg = sqrt(var_CAR_pre_avg)
 
                 capture drop v_*
 
 			* Post-event
-                scalar var_CAR_post_avg = var_CAR_pre_avg
-                scalar SD_CAR_post_avg = SD_CAR_pre_avg
+                foreach x in Germany UK Spain Italy Czech_Republic Netherlands France Romania Bulgaria Greece Others {
+                    if `x'_num != 0 {
+                    	local temp = `x'_num
+                        forvalues i = 1(1)`temp' {
+                            capture drop v_*
+                            gen v_var_CAR_post_`x'_`i' = var_CAR_post_`x'_`i'
+                        }
+                    }
+			    }
+
+                egen v_var_CAR_post_sum = rowtotal(v_*)
+                scalar var_CAR_post_avg = v_var_CAR_post_sum[1]/No^2
+                scalar SD_CAR_post_avg = sqrt(var_CAR_post_avg)
+
+                capture drop v_*
+
 
 			* Event Day
                 foreach x in Germany UK Spain Italy Czech_Republic Netherlands France Romania Bulgaria Greece Others {
@@ -118,7 +131,7 @@
 			    }
 
                 egen v_var_CAR_event_sum = rowtotal(v_*)
-                scalar var_CAR_event_avg = v_var_CAR_event_sum[1]/N^2
+                scalar var_CAR_event_avg = v_var_CAR_event_sum[1]/No^2
                 scalar SD_CAR_event_avg = sqrt(var_CAR_event_avg)
 
                 capture drop v_*
@@ -134,8 +147,75 @@
 			    }
 
                 egen v_var_CAR_ew_sum = rowtotal(v_*)
-                scalar var_CAR_ew_avg = v_var_CAR_ew_sum[1]/N^2
+                scalar var_CAR_ew_avg = v_var_CAR_ew_sum[1]/No^2
                 scalar SD_CAR_ew_avg = sqrt(var_CAR_ew_avg)
 
                 capture drop v_*
 		}
+
+
+    ** Significance
+            ** Test statistical significance
+		// scalar df = 950 // use df from reg output? what to do for const mean method
+		/*scalar level = 0.05
+		scalar cv = invttail(df, level/2)*/
+		
+        if test_specific_date == "yes" {
+            * Pre-event
+                scalar t_pre = CAR_pre/SD_CAR_pre
+                scalar p_pre = ttail(df ,abs(t_pre))*2
+
+            * Event day
+                scalar t_event = CAR_event/SD_CAR_event
+                scalar p_event = ttail(df ,abs(t_event))*2
+
+            * Post-event
+                scalar t_post = CAR_post/SD_CAR_post
+                scalar p_post = ttail(df ,abs(t_post))*2
+                
+            * Full Event window
+                scalar t_ew = CAR_ew/SD_CAR_ew
+                scalar p_ew = ttail(df ,abs(t_ew))*2
+		}
+
+        else {
+            foreach x in Germany UK Spain Italy Czech_Republic Netherlands France Romania Bulgaria Greece Others {
+				if `x'_num != 0 {
+					local temp = `x'_num
+					forvalues i = 1(1)`temp' {
+                        * Pre-event
+                            scalar t_pre_`x'_`i' = CAR_pre_`x'_`i'/SD_CAR_pre_`x'_`i'
+                            scalar p_pre_`x'_`i' = ttail(df ,abs(t_pre_`x'_`i'))*2
+
+                        * Event day
+                            scalar t_event_`x'_`i' = CAR_event_`x'_`i'/SD_CAR_event_`x'_`i'
+                            scalar p_event_`x'_`i' = ttail(df ,abs(t_event_`x'_`i'))*2
+
+                        * Post-event
+                            scalar t_post_`x'_`i' = CAR_post_`x'_`i'/SD_CAR_post_`x'_`i'
+                            scalar p_post_`x'_`i' = ttail(df ,abs(t_post_`x'_`i'))*2
+                            
+                        * Full Event window
+                            scalar t_ew_`x'_`i' = CAR_ew_`x'_`i'/SD_CAR_ew_`x'_`i'
+                            scalar p_ew_`x'_`i' = ttail(df ,abs(t_ew_`x'_`i'))*2
+					}
+				}
+			}
+
+            * Average CAR
+                * Pre-event
+                    scalar t_pre_avg = CAR_pre_avg/SD_CAR_pre_avg
+                    scalar p_pre_avg = ttail(df ,abs(t_pre_avg))*2
+
+                * Event day
+                    scalar t_event_avg = CAR_event_avg/SD_CAR_event_avg
+                    scalar p_event_avg = ttail(df ,abs(t_event_avg))*2
+
+                * Post-event
+                    scalar t_post_avg = CAR_post_avg/SD_CAR_post_avg
+                    scalar p_post_avg = ttail(df ,abs(t_post_avg))*2
+                            
+                * Full Event window
+                    scalar t_ew_avg = CAR_ew_avg/SD_CAR_ew_avg
+                    scalar p_ew_avg = ttail(df ,abs(t_ew_avg))*2
+        }

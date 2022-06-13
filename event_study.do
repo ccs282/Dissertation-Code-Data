@@ -140,7 +140,13 @@
 					local temp = `x'_num
 					forvalues i = 1(1)`temp' {
 						capture drop AR_`x'_`i'
-						gen AR_`x'_`i' = ln_return_eua_settle - NR_`x'_`i'
+						if reg_type == 3 {
+							gen AR_`x'_`i' = eua_settle - NR_`x'_`i'
+						}
+						else {
+							gen AR_`x'_`i' = ln_return_eua_settle - NR_`x'_`i'
+
+						}
 					}
 				}
 			}	
@@ -225,7 +231,7 @@
 	** Average CAR across dates and countries
 
 		if test_specific_date != "yes" {
-			scalar N = Germany_num + UK_num + Spain_num + Italy_num + Czech_Republic_num + Netherlands_num + France_num + Romania_num + Bulgaria_num + Greece_num + Others_num
+			scalar No = Germany_num + UK_num + Spain_num + Italy_num + Czech_Republic_num + Netherlands_num + France_num + Romania_num + Bulgaria_num + Greece_num + Others_num
 
             * Pre-event
                 foreach x in Germany UK Spain Italy Czech_Republic Netherlands France Romania Bulgaria Greece Others {

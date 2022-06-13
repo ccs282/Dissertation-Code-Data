@@ -1,58 +1,34 @@
 	
-    ** Test statistical significance
-		// scalar df = 950 // use df from reg output? what to do for const mean method
-		/*scalar level = 0.05
-		scalar cv = invttail(df, level/2)*/
-		
-        if test_specific_date == "yes" {
-            * Pre-event
-                scalar t_pre = CAR_pre/SD_CAR_pre
-                scalar p_pre = ttail(df ,abs(t_pre))*2
-                di CAR_pre
-                di p_pre
 
-            * Event day
-                scalar t_event = CAR_event/SD_CAR_event
-                scalar p_event = ttail(df ,abs(t_event))*2
-                di CAR_event
-                di p_event
-
-            * Post-event
-                scalar t_post = CAR_post/SD_CAR_post
-                scalar p_post = ttail(df ,abs(t_post))*2
-                di CAR_post
-                di p_post
-                
-            * Full Event window
-                scalar t_ew = CAR_ew/SD_CAR_ew
-                scalar p_ew = ttail(df ,abs(t_ew))*2
-                di CAR_ew
-                di p_ew
-		}
-
-        else {
+    ** Results matrices
+        if test_specific_date != "yes" {
             foreach x in Germany UK Spain Italy Czech_Republic Netherlands France Romania Bulgaria Greece Others {
 				if `x'_num != 0 {
 					local temp = `x'_num
 					forvalues i = 1(1)`temp' {
-                        * Pre-event
-                            scalar t_pre_`x'_`i' = CAR_pre_`x'_`i'/SD_CAR_pre_`x'_`i'
-                            scalar p_pre_`x'_`i' = ttail(df ,abs(t_pre_`x'_`i'))*2
+                        matrix def `x' = (CAR_pre_`x'_`i', CAR_event_`x'_`i', CAR_post_`x'_`i', CAR_ew_`x'_`i'\ SD_CAR_pre_`x'_`i', SD_CAR_event_`x'_`i', SD_CAR_post_`x'_`i', SD_CAR_ew_`x'_`i' \ p_pre_`x'_`i', p_event_`x'_`i', p_post_`x'_`i', p_ew_`x'_`i')
+                        matrix rown `x' = CAR SD p-value
+                        matrix coln `x' = CAR_pre CAR_event CAR_post CAR_event_window
+                        matrix list `x'
+                                                di "`x'_`i'; "
+                        summ date if date == announce_date[`x'_row, `i'], meanonly
+                        di r(mean)
+                        di "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
 
-                        * Event day
-                            scalar t_event_`x'_`i' = CAR_event_`x'_`i'/SD_CAR_event_`x'_`i'
-                            scalar p_event_`x'_`i' = ttail(df ,abs(t_event_`x'_`i'))*2
-
-                        * Post-event
-                            scalar t_post_`x'_`i' = CAR_post_`x'_`i'/SD_CAR_post_`x'_`i'
-                            scalar p_post_`x'_`i' = ttail(df ,abs(t_post_`x'_`i'))*2
-                            
-                        * Full Event window
-                            scalar t_ew_`x'_`i' = CAR_ew_`x'_`i'/SD_CAR_ew_`x'_`i'
-                            scalar p_ew_`x'_`i' = ttail(df ,abs(t_ew_`x'_`i'))*2
 					}
 				}
 			}
+        
+            matrix def avg = (CAR_pre_avg, CAR_event_avg, CAR_post_avg, CAR_ew_avg\ SD_CAR_pre_avg, SD_CAR_event_avg, SD_CAR_post_avg, SD_CAR_ew_avg \ p_pre_avg, p_event_avg, p_post_avg, p_ew_avg)
+            matrix rown avg = CAR SD p-value
+            matrix coln avg = CAR_pre_avg CAR_event_avg CAR_post_avg CAR_event_window_avg
+            matrix list avg
         }
 
-
+        else {
+            matrix def results = (CAR_pre, CAR_event, CAR_post, CAR_ew\ SD_CAR_pre, SD_CAR_event, SD_CAR_post, SD_CAR_ew \ p_pre, p_event, p_post, p_ew)
+            matrix rown results = CAR SD p-value
+            matrix coln results = CAR_pre CAR_event CAR_post CAR_event_window
+            matrix list results
+            di date_specific
+        }

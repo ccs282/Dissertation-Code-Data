@@ -35,22 +35,22 @@ Wrong Data:
 		* Which dates to analyse?
 			
 			* Test one specific date only (independent of country exit dates)
-				scalar test_specific_date = "no" // "yes" when determining one specific date only; must be unequal "yes" when analysing countries' coal phase-outs
+				scalar test_specific_date = "yes" // "yes" when determining one specific date only; must be unequal "yes" when analysing countries' coal phase-outs
 
 				scalar date_specific = 20130416 // determine date to be tested if test_specific_date == "yes"
 
 			* Test coal phase-out dates from matrix 
-				scalar Germany_num = 2 // 0-4
-				scalar UK_num = 0 // 0-3
-				scalar Spain_num = 1 // 0-4
-				scalar Italy_num = 1 // 0-2
+				scalar Germany_num = 		1 // 0-4
+				scalar UK_num = 			1 // 0-3
+				scalar Spain_num = 			1 // 0-4
+				scalar Italy_num = 			1 // 0-2
 				scalar Czech_Republic_num = 1 // 0-2
-				scalar Netherlands_num = 1 // 0-3
-				scalar France_num = 2 // 0-3
-				scalar Romania_num = 1 // 0-3
-				scalar Bulgaria_num = 1 // 0-1
-				scalar Greece_num = 1 // 0-3
-				scalar Others_num = 0 // 0-?
+				scalar Netherlands_num = 	1 // 0-3
+				scalar France_num = 		1 // 0-3
+				scalar Romania_num = 		1 // 0-3
+				scalar Bulgaria_num = 		1 // 0-1
+				scalar Greece_num = 		1 // 0-3
+				scalar Others_num = 		0 // 0-?
 
 		* Event Study parameters
 			scalar event_length_pre = 3 // length of event window pre event (days)
@@ -65,21 +65,17 @@ Wrong Data:
 
 *** Postestimation: Test significance
 	quietly do post_estimation
-	quietly do significance
-	scalar list
+	do significance
+	//scalar list
 
 		
 
 
 
 
+*** Estudy command
 
-
-
-
-
-
-// Estudy command
+	//estudy ln_return_eua_settle, datevar(stata_date) evdate(20130416) lb1(3) ub1(3) dateformat(YMD) indexlist(ln_return_eua_settle) modtype(HMM)
 
 
 // MSFE
