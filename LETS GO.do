@@ -45,7 +45,7 @@ Wrong Data:
 				scalar Italy_num = 1 // 0-2
 				scalar Czech_Republic_num = 1 // 0-2
 				scalar Netherlands_num = 1 // 0-3
-				scalar France_num = 1 // 0-3
+				scalar France_num = 2 // 0-3
 				scalar Romania_num = 1 // 0-3
 				scalar Bulgaria_num = 1 // 0-1
 				scalar Greece_num = 1 // 0-3
@@ -63,10 +63,7 @@ Wrong Data:
 *** Postestimation: Test significance
 	do post_estimation
 	scalar list
-	
-	** Variance & SD avg CAR (event window; across different dates)
-		//
-	
+		
 	** Test statistical significance
 		scalar df = 950
 		scalar level = 0.05

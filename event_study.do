@@ -210,68 +210,72 @@
 					}
 				}
 			}
-
-            * Average CAR across dates and countries
-                scalar N = Germany_num + UK_num + Spain_num + Italy_num + Czech_Republic_num + Netherlands_num + France_num + Romania_num + Bulgaria_num + Greece_num + Others_num
-
-                * Pre-event
-                    foreach x in Germany UK Spain Italy Czech_Republic Netherlands France Romania Bulgaria Greece Others {
-                        if `x'_num != 0 {
-                            local temp = `x'_num
-                            forvalues i = 1(1)`temp' {
-                                capture drop var_CAR_pre_`x'_`i'
-                                gen var_CAR_pre_`x'_`i' = CAR_pre_`x'_`i'
-                            }
-                        }
-			        }
-
-                    egen var_CAR_pre_avg = rowmean(var_CAR*)
-                    scalar CAR_pre_avg = var_CAR_pre_avg[1]
-                    capture drop var_*
-                    
-			    * Post-event
-                    foreach x in Germany UK Spain Italy Czech_Republic Netherlands France Romania Bulgaria Greece Others {
-                        if `x'_num != 0 {
-                            local temp = `x'_num
-                            forvalues i = 1(1)`temp' {
-                                capture drop var_CAR_post_`x'_`i'
-                                gen var_CAR_post_`x'_`i' = CAR_post_`x'_`i'
-                            }
-                        }
-			        }
-
-                    egen var_CAR_post_avg = rowmean(var_CAR*)
-                    scalar CAR_post_avg = var_CAR_post_avg[1]
-                    capture drop var_*
-                    
-				* Event Day
-				    foreach x in Germany UK Spain Italy Czech_Republic Netherlands France Romania Bulgaria Greece Others {
-                        if `x'_num != 0 {
-                            local temp = `x'_num
-                            forvalues i = 1(1)`temp' {
-                                capture drop var_CAR_event_`x'_`i'
-                                gen var_CAR_event_`x'_`i' = CAR_event_`x'_`i'
-                            }
-                        }
-			        }
-
-                    egen var_CAR_event_avg = rowmean(var_CAR*)
-                    scalar CAR_event_avg = var_CAR_event_avg[1]
-                    capture drop var_*
-
-                * Event window
-				    foreach x in Germany UK Spain Italy Czech_Republic Netherlands France Romania Bulgaria Greece Others {
-                        if `x'_num != 0 {
-                            local temp = `x'_num
-                            forvalues i = 1(1)`temp' {
-                                capture drop var_CAR_ew_`x'_`i'
-                                gen var_CAR_ew_`x'_`i' = CAR_event_win_`x'_`i'
-                            }
-                        }
-			        }
-
-                    egen var_CAR_ew_avg = rowmean(var_CAR*)
-                    scalar CAR_event_win_avg = var_CAR_ew_avg[1]
-                    capture drop var_*
-
 		}
+
+	** Average CAR across dates and countries
+
+		if test_specific_date != "yes" {
+			scalar N = Germany_num + UK_num + Spain_num + Italy_num + Czech_Republic_num + Netherlands_num + France_num + Romania_num + Bulgaria_num + Greece_num + Others_num
+
+            * Pre-event
+                foreach x in Germany UK Spain Italy Czech_Republic Netherlands France Romania Bulgaria Greece Others {
+                    if `x'_num != 0 {
+                    	local temp = `x'_num
+                        forvalues i = 1(1)`temp' {
+                            capture drop v_CAR_pre_`x'_`i'
+                            gen v_CAR_pre_`x'_`i' = CAR_pre_`x'_`i'
+                        }
+                    }
+			    }
+
+                egen v_CAR_pre_avg = rowmean(v_CAR*)
+                scalar CAR_pre_avg = v_CAR_pre_avg[1]
+                capture drop v_*
+                    
+			* Post-event
+                foreach x in Germany UK Spain Italy Czech_Republic Netherlands France Romania Bulgaria Greece Others {
+                    if `x'_num != 0 {
+                         local temp = `x'_num
+                        forvalues i = 1(1)`temp' {
+                            capture drop v_CAR_post_`x'_`i'
+                            gen v_CAR_post_`x'_`i' = CAR_post_`x'_`i'
+                        }
+                    }
+			    }
+
+                egen v_CAR_post_avg = rowmean(v_CAR*)
+                scalar CAR_post_avg = v_CAR_post_avg[1]
+                capture drop v_*
+                    
+			* Event Day
+				foreach x in Germany UK Spain Italy Czech_Republic Netherlands France Romania Bulgaria Greece Others {
+                    if `x'_num != 0 {
+                        local temp = `x'_num
+                        forvalues i = 1(1)`temp' {
+                            capture drop v_CAR_event_`x'_`i'
+                            gen v_CAR_event_`x'_`i' = CAR_event_`x'_`i'
+                        }
+                    }
+			    }
+
+                egen v_CAR_event_avg = rowmean(v_CAR*)
+                scalar CAR_event_avg = v_CAR_event_avg[1]
+                capture drop v_*
+
+            * Event window
+				foreach x in Germany UK Spain Italy Czech_Republic Netherlands France Romania Bulgaria Greece Others {
+                    if `x'_num != 0 {
+                        local temp = `x'_num
+                        forvalues i = 1(1)`temp' {
+                            capture drop v_CAR_ew_`x'_`i'
+                            gen v_CAR_ew_`x'_`i' = CAR_event_win_`x'_`i'
+                        }
+                    }
+			    }
+
+                egen v_CAR_ew_avg = rowmean(v_CAR*)
+                scalar CAR_event_win_avg = v_CAR_ew_avg[1]
+                capture drop v_*
+		}
+
+
