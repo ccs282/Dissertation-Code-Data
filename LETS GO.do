@@ -1,3 +1,4 @@
+
 *** SET WD
 
 	cd "C:\Users\jonas\OneDrive - London School of Economics\Documents\LSE\GY489_Dissertation\LETS GO\Dissertation-Code-Data"
@@ -36,7 +37,7 @@ Wrong Data:
 			* Test one specific date only (independent of country exit dates)
 				scalar test_specific_date = "no" // "yes" when determining one specific date only; must be unequal "yes" when analysing countries' coal phase-outs
 
-				scalar date_specific = 20190128 // determine date to be tested if test_specific_date == "yes"
+				scalar date_specific = 20140416 // determine date to be tested if test_specific_date == "yes"
 
 			* Test coal phase-out dates from matrix 
 				scalar Germany_num = 2 // 0-4
@@ -61,38 +62,10 @@ Wrong Data:
 	quietly do event_study
 
 *** Postestimation: Test significance
-	do post_estimation
+	quietly do post_estimation
 	scalar list
+	quietly do significance
 		
-	** Test statistical significance
-		scalar df = 950
-		scalar level = 0.05
-		scalar cv = invttail(df, level/2)
-		
-		* Pre-event
-			scalar t_stat_pre = CAR_pre/SD_CAR_prepost
-			scalar p_value_pre = ttail(df ,abs(t_stat_pre))*2
-			di CAR_pre
-			di p_value_pre
-
-		* Event day
-			scalar t_stat_event = CAR_event/SD_CAR_event
-			scalar p_value_event = ttail(df ,abs(t_stat_event))*2
-			di CAR_event
-			di p_value_event
-
-		* Post-event
-			scalar t_stat_post = CAR_post/SD_CAR_prepost
-			scalar p_value_post = ttail(df ,abs(t_stat_post))*2
-			di CAR_post
-			di p_value_post
-			
-		* Full Event window
-			scalar t_stat_event_win = CAR_event_win/SD_CAR_event_win
-			scalar p_value_event_win = ttail(df ,abs(t_stat_event_win))*2
-			di CAR_event_win
-			di p_value_event_win
-
 
 
 

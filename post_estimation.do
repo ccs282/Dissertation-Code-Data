@@ -41,12 +41,16 @@
 	** Variance & SD CAR (event window)
 		if test_specific_date == "yes" {
             * Full Event window
-                scalar var_CAR_event_win = (2*event_length+1)*var_AR
-                scalar SD_CAR_event_win = sqrt(var_CAR_event_win)
+                scalar var_CAR_ew = (2*event_length+1)*var_AR
+                scalar SD_CAR_ew = sqrt(var_CAR_ew)
 
-            * Pre-event & Post-event
-                scalar var_CAR_prepost = event_length*var_AR
-                scalar SD_CAR_prepost = sqrt(var_CAR_prepost)
+            * Pre-event
+                scalar var_CAR_pre = event_length*var_AR
+                scalar SD_CAR_pre = sqrt(var_CAR_pre)
+
+            * Post-event
+                scalar var_CAR_post = var_CAR_pre
+                scalar SD_CAR_post = SD_CAR_pre
 
             * Event Day
                 scalar var_CAR_event = var_AR
@@ -135,8 +139,3 @@
 
                 capture drop v_*
 		}
-
-
-
-
-

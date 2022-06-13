@@ -25,10 +25,10 @@
 	** Event window
 
 		if test_specific_date == "yes" {
-			capture drop event_win
-			gen event_win = .
+			capture drop ew
+			gen ew = .
 			summ trading_date if event_date == 1
-			replace event_win = 1 if (trading_date >= r(mean) - event_length) & (trading_date <= r(mean) + event_length)
+			replace ew = 1 if (trading_date >= r(mean) - event_length) & (trading_date <= r(mean) + event_length)
 		}
 
 		else {
@@ -36,10 +36,10 @@
 				if `x'_num != 0 {
 					local temp = `x'_num
 					forvalues i = 1(1)`temp' {
-						capture drop event_win_`x'_`i'
-						gen event_win_`x'_`i' = .
+						capture drop ew_`x'_`i'
+						gen ew_`x'_`i' = .
 						summ trading_date if event_date_`x'_`i' == 1
-						replace event_win_`x'_`i' = 1 if (trading_date >= r(mean) - event_length) & (trading_date <= r(mean) + event_length)
+						replace ew_`x'_`i' = 1 if (trading_date >= r(mean) - event_length) & (trading_date <= r(mean) + event_length)
 					}
 				}
 			}	
@@ -76,16 +76,20 @@
 			if reg_type == 1 {
 				summ ln_return_eua_settle if est_win == 1
 				gen NR = r(mean)
+				scalar df = est_length - 10 // what exactly?
 			}
 
 			else if reg_type == 2 {
 				reg ln_return_eua_settle L.ln_return_eua_settle $ln_return_explanatory if est_win == 1 & date >= earliest_date, robust
 				predict NR
+				scalar df = e(df_m)
 			}
 
 			else if reg_type == 3 {
 				reg eua_settle L.eua_settle $explanatory if est_win == 1 & date >= earliest_date, robust
 				predict NR
+				scalar df = e(df_m)
+
 			}
 			
 			order NR, after(ln_return_eua_settle) 
@@ -101,16 +105,22 @@
 						if reg_type == 1 {
 							summ ln_return_eua_settle if est_win_`x'_`i' == 1
 							gen NR_`x'_`i' = r(mean)
+							scalar df = est_length - 10 // what exactly?
+
 						}
 
 						else if reg_type == 2 {
 							reg ln_return_eua_settle L.ln_return_eua_settle $ln_return_explanatory if est_win_`x'_`i' == 1 & date >= earliest_date, robust
 							predict NR_`x'_`i'
+							scalar df = e(df_m)
+
 						}
 
 						else if reg_type == 3 {
 							reg eua_settle L.eua_settle $explanatory if est_win_`x'_`i' == 1 & date >= earliest_date, robust
 							predict NR_`x'_`i'
+							scalar df = e(df_m)
+
 						}
 					}
 				}
@@ -150,20 +160,20 @@
 
 		if test_specific_date == "yes" {
 			capture drop CAR*
-			//tempname CAR_event_win CAR_pre CAR_post CAR_event
+			//tempname CAR_ew CAR_pre CAR_post CAR_event
 			
 			* Event window
-				egen CARa = total(AR) if event_win == 1
+				egen CARa = total(AR) if ew == 1
 				summ CARa, meanonly
-				scalar CAR_event_win = r(mean)
+				scalar CAR_ew = r(mean)
 				
 			* Pre-event
-				egen CARb = total(AR) if event_win == 1 & date < date_specific
+				egen CARb = total(AR) if ew == 1 & date < date_specific
 				summ CARb, meanonly
 				scalar CAR_pre = r(mean)
 
 			* Post-event
-				egen CARc = total(AR) if event_win == 1 & date > date_specific
+				egen CARc = total(AR) if ew == 1 & date > date_specific
 				summ CARc, meanonly
 				scalar CAR_post = r(mean)
 
@@ -181,21 +191,21 @@
 					local temp = `x'_num
 					forvalues i = 1(1)`temp' {
 						* Event window
-							egen CARa = total(AR_`x'_`i') if event_win_`x'_`i' == 1
+							egen CARa = total(AR_`x'_`i') if ew_`x'_`i' == 1
 							summ CARa, meanonly
-							scalar CAR_event_win_`x'_`i' = r(mean)
-							di "CAR_event_win_`x'_`i'"
+							scalar CAR_ew_`x'_`i' = r(mean)
+							di "CAR_ew_`x'_`i'"
 	
 						* Pre-event
 							summ date if event_date_`x'_`i' == 1, meanonly
-							egen CARb = total(AR_`x'_`i') if event_win_`x'_`i' == 1 & date < `r(mean)'
+							egen CARb = total(AR_`x'_`i') if ew_`x'_`i' == 1 & date < `r(mean)'
 							summ CARb, meanonly
 							scalar CAR_pre_`x'_`i' = r(mean)
 							di "CAR_pre_`x'_`i'"
 
 						* Post-event
 							summ date if event_date_`x'_`i' == 1, meanonly
-							egen CARc = total(AR_`x'_`i') if event_win_`x'_`i' == 1 & date > `r(mean)'
+							egen CARc = total(AR_`x'_`i') if ew_`x'_`i' == 1 & date > `r(mean)'
 							summ CARc, meanonly
 							scalar CAR_post_`x'_`i' = r(mean)
 							di"CAR_post_`x'_`i'"
@@ -268,13 +278,13 @@
                         local temp = `x'_num
                         forvalues i = 1(1)`temp' {
                             capture drop v_CAR_ew_`x'_`i'
-                            gen v_CAR_ew_`x'_`i' = CAR_event_win_`x'_`i'
+                            gen v_CAR_ew_`x'_`i' = CAR_ew_`x'_`i'
                         }
                     }
 			    }
 
                 egen v_CAR_ew_avg = rowmean(v_CAR*)
-                scalar CAR_event_win_avg = v_CAR_ew_avg[1]
+                scalar CAR_ew_avg = v_CAR_ew_avg[1]
                 capture drop v_*
 		}
 
