@@ -1,40 +1,70 @@
 
 ** explanatory variables 
 	
-	global explanatory oil_last coal_last gas_last elec_last gsci vix stoxx diff_baa_aaa cer_last ecb_spot_3m
+	global explanatory oil coal gas elec gsci vix stoxx diff_baa_aaa cer ecb_spot_3m
 
+/*
 	foreach var of global explanatory {
 		capture drop ln_return_`var'
-		gen ln_return_`var' = ln(`var'[_n] / `var'[_n - 1]) if _n != 1
+		gen ln_return_`var' = ln(`var'[_n] / `var'[_n - 1]) if _n > 1
+	}
+*/
+
+	save data, replace
+
+	foreach var of global explanatory {
+		drop if `var' == .
+		capture drop ln_return_`var'
+		gen ln_return_`var' = ln(`var'[_n] / `var'[_n - 1]) if _n > 1
+		save `var', replace
+		use `var', clear
+		keep ln_return_`var' date
+		save, replace
+		use data, clear
+		mmerge date using `var'
+		drop _merge
+		save data, replace
+		//erase "`var'.dta"
 	}
 
-	global ln_return_explanatory ln_return_oil_last ln_return_coal_last ln_return_gas_last ln_return_elec_last ln_return_gsci ln_return_vix ln_return_stoxx ln_return_diff_baa_aaa ln_return_cer_last ln_return_ecb_spot_3m
-	
+
+		drop if eua == .
+		capture drop ln_return_eua
+		gen ln_return_eua = ln(eua[_n] / eua[_n - 1]) if _n > 1
+		save eua, replace
+		use eua, clear
+		keep ln_return_eua date
+		save, replace
+		use data, clear
+		mmerge date using eua
+		drop _merge
+
+
+
+
+	global ln_return_explanatory ln_return_oil ln_return_coal ln_return_gas ln_return_elec ln_return_gsci ln_return_vix ln_return_stoxx ln_return_diff_baa_aaa ln_return_cer ln_return_ecb_spot_3m
 	
 	capture drop aaa baa
 	
 ** explained/dependent variable
 	
-	capture drop ln_return_eua_settle
-	gen ln_return_eua_settle = .
-	replace ln_return_eua_settle = ln(eua_settle[_n] / eua_settle[_n - 1]) if _n != 1
 		
-	order ln_return_eua_settle, after(eua_settle)
+	order ln_return_eua, after(eua)
 	
 	* Create lagged dependent variable
 		/*
 		forvalues i=1(1)5 {
-			capture drop ln_return_eua_settle_lag`i'
-			gen ln_return_eua_settle_lag`i' = .
-			replace ln_return_eua_settle_lag`i' = ln_return_eua_settle[_n-`i'] if _n != 1
+			capture drop ln_return_eua_lag`i'
+			gen ln_return_eua_lag`i' = .
+			replace ln_return_eua_lag`i' = ln_return_eua[_n-`i'] if _n != 1
 		}
-		//capture drop eua_settle_lag*
+		//capture drop eua_lag*
 		*/
 
 
 ** Prep time series
 
-	drop if date <= 20080403 // Koch et al. (2014) use 20080314; but there's a jump in EUA prices on April 2 in my data
+	//drop if date <= 20080403 // Koch et al. (2014) use 20080314; but there's a jump in EUA prices on April 2 in my data
 
 	capture drop year month day stata_date
 	gen year = int(date/10000) 
@@ -54,10 +84,10 @@
 	
 	/*
 	forvalues i=1(1)100 {
-		capture drop eua_settle_lag`i'
-		gen eua_settle_lag`i' = .
-		replace eua_settle_lag`i' = eua_settle[_n-`i'] if _n != 1
+		capture drop eua_lag`i'
+		gen eua_lag`i' = .
+		replace eua_lag`i' = eua[_n-`i'] if _n != 1
 	}
-		//capture drop eua_settle_lag*
+		//capture drop eua_lag*
 	*/
 
