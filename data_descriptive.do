@@ -1,10 +1,10 @@
 ** mean log returns
 	
-	summ ln_return_eua_settle if date >= 20071003 & date <= 20140205 // compare to Deeney et al. (2016); mean -0.000815; SD 0.03294; min -0.43208; max 0.24525; obs 1625
+	summ ln_return_eua if date >= 20071003 & date <= 20140205 // compare to Deeney et al. (2016); mean -0.000815; SD 0.03294; min -0.43208; max 0.24525; obs 1625
 	
-	summ ln_return_eua_settle if date >= 20080324 & date <= 20121019 // compare to Kemden et al. (2016); mean −0.000866; SD 0.026732; min −0.116029; max 0.245247; obs 1194
+	summ ln_return_eua if date >= 20080324 & date <= 20121019 // compare to Kemden et al. (2016); mean −0.000866; SD 0.026732; min −0.116029; max 0.245247; obs 1194
 		
-	summ ln_return_eua_settle if date >= 20080314 & date <= 20140430 // compare to Koch et al. (2014); mean -0.23 [-.00088123 daily]; SD 0.56 [.03466313 daily]; annualised values!!! for log returns, divide by 261; for SD divide by sqrt(261); assume 261 trading days (my calcuations)
+	summ ln_return_eua if date >= 20080314 & date <= 20140430 // compare to Koch et al. (2014); mean -0.23 [-.00088123 daily]; SD 0.56 [.03466313 daily]; annualised values!!! for log returns, divide by 261; for SD divide by sqrt(261); assume 261 trading days (my calcuations)
 	di -0.23/261
 	di 0.56/sqrt(261)
 	

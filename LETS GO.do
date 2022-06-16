@@ -7,6 +7,8 @@
 *** IMPORT DATA
 	clear all
 	import delimited "Data.csv"
+	
+	/* Install package mmerge!*/
 
 /*
 Wrong Data:
@@ -16,7 +18,7 @@ Wrong Data:
 */
 
 *** PREP DATA
-	quietly do data_prep
+	 do data_prep
 
 	d
 
@@ -37,7 +39,7 @@ Wrong Data:
 			* Test one specific date only (independent of country exit dates)
 				scalar test_specific_date = "yes" // "yes" when determining one specific date only; must be unequal "yes" when analysing countries' coal phase-outs
 
-				scalar date_specific = 20130416 // determine date to be tested if test_specific_date == "yes"
+				scalar date_specific = 20190128 // determine date to be tested if test_specific_date == "yes"
 
 			* Test coal phase-out dates from matrix 
 				scalar Germany_num = 		1 // 0-4

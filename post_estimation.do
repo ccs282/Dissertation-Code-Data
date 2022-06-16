@@ -1,7 +1,7 @@
 	
     ** Variance & SD AR (estimation win)
 		if test_specific_date == "yes" {
-        	summ ln_return_eua_settle if est_win == 1
+        	summ ln_return_eua if est_win == 1
             capture drop AR_squared
             capture drop TSS
             gen AR_squared = .
@@ -20,7 +20,7 @@
 				if `x'_num != 0 {
 					local temp = `x'_num
 					forvalues i = 1(1)`temp' {
-                    	summ ln_return_eua_settle if est_win_`x'_`i' == 1
+                    	summ ln_return_eua if est_win_`x'_`i' == 1
                         capture drop AR_squared
                         capture drop TSS
                         gen AR_squared = .

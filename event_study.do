@@ -74,25 +74,25 @@
 			capture drop NR
 
 			if reg_type == 1 {
-				summ ln_return_eua_settle if est_win == 1
+				summ ln_return_eua if est_win == 1
 				gen NR = r(mean)
 				scalar df = est_length - 10 // what exactly?
 			}
 
 			else if reg_type == 2 {
-				reg ln_return_eua_settle L.ln_return_eua_settle $ln_return_explanatory if est_win == 1 & date >= earliest_date, robust
+				reg ln_return_eua L.ln_return_eua $ln_return_explanatory if est_win == 1 & date >= earliest_date, robust
 				predict NR
 				scalar df = e(df_m)
 			}
 
 			else if reg_type == 3 {
-				reg eua_settle L.eua_settle $explanatory if est_win == 1 & date >= earliest_date, robust
+				reg eua L.eua $explanatory if est_win == 1 & date >= earliest_date, robust
 				predict NR
 				scalar df = e(df_m)
 
 			}
 			
-			order NR, after(ln_return_eua_settle) 
+			order NR, after(ln_return_eua) 
 		}
 
 		else{
@@ -103,21 +103,21 @@
 						capture drop NR_`x'_`i'
 
 						if reg_type == 1 {
-							summ ln_return_eua_settle if est_win_`x'_`i' == 1
+							summ ln_return_eua if est_win_`x'_`i' == 1
 							gen NR_`x'_`i' = r(mean)
 							scalar df = est_length - 10 // what exactly?
 
 						}
 
 						else if reg_type == 2 {
-							reg ln_return_eua_settle L.ln_return_eua_settle $ln_return_explanatory if est_win_`x'_`i' == 1 & date >= earliest_date, robust
+							reg ln_return_eua L.ln_return_eua $ln_return_explanatory if est_win_`x'_`i' == 1 & date >= earliest_date, robust
 							predict NR_`x'_`i'
 							scalar df = e(df_m)
 
 						}
 
 						else if reg_type == 3 {
-							reg eua_settle L.eua_settle $explanatory if est_win_`x'_`i' == 1 & date >= earliest_date, robust
+							reg eua L.eua $explanatory if est_win_`x'_`i' == 1 & date >= earliest_date, robust
 							predict NR_`x'_`i'
 							scalar df = e(df_m)
 
@@ -130,7 +130,7 @@
 	** Abnormal returns
 		if test_specific_date == "yes" {
 			capture drop AR
-			gen AR = ln_return_eua_settle - NR
+			gen AR = ln_return_eua - NR
 			order AR, after(NR)
 		}
 
@@ -141,10 +141,10 @@
 					forvalues i = 1(1)`temp' {
 						capture drop AR_`x'_`i'
 						if reg_type == 3 {
-							gen AR_`x'_`i' = eua_settle - NR_`x'_`i'
+							gen AR_`x'_`i' = eua - NR_`x'_`i'
 						}
 						else {
-							gen AR_`x'_`i' = ln_return_eua_settle - NR_`x'_`i'
+							gen AR_`x'_`i' = ln_return_eua - NR_`x'_`i'
 
 						}
 					}
@@ -154,7 +154,7 @@
 
 		/*
 		if reg_type == 3 {
-			gen AR = eua_settle - NR 
+			gen AR = eua - NR 
 			
 			capture drop AR_perc
 			gen AR_perc = AR/NR
