@@ -62,8 +62,10 @@ Wrong Data:
 			scalar earliest_date = 20080314 // earliest date for estimation window
 						
 			scalar reg_type = 1 // 1: constant mean return 2: statistical market model 3: wrong model 
+			
+			scalar show_days = 0 // 1: show not only pre / post estimations but also every single day
 
-	quietly do event_study
+	 quietly do event_study
 
 *** Postestimation: Test significance
 	quietly do post_estimation

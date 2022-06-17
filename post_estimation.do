@@ -176,6 +176,20 @@
             * Full Event window
                 scalar t_ew = CAR_ew/SD_CAR_ew
                 scalar p_ew = ttail(df ,abs(t_ew))*2
+
+            * Individual days within event window
+
+				local pre = event_length_pre
+				local post = event_length_post
+
+                forvalues t = -`pre'(1)`post' {
+                    local nom = `t' + event_length_pre + 1
+                    scalar t_d`nom' = CAR_d`nom'/SD_CAR_event
+                    scalar p_d`nom' = ttail(df ,abs(t_d`nom'))*2
+				}
+
+
+
 		}
 
         else {
