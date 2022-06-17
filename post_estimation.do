@@ -90,7 +90,6 @@
                     if `x'_num != 0 {
                     	local temp = `x'_num
                         forvalues i = 1(1)`temp' {
-                            capture drop v_*
                             gen v_var_CAR_pre_`x'_`i' = var_CAR_pre_`x'_`i'
                         }
                     }
@@ -107,7 +106,6 @@
                     if `x'_num != 0 {
                     	local temp = `x'_num
                         forvalues i = 1(1)`temp' {
-                            capture drop v_*
                             gen v_var_CAR_post_`x'_`i' = var_CAR_post_`x'_`i'
                         }
                     }
