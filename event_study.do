@@ -74,7 +74,7 @@
 			capture drop NR
 
 			if reg_type == 1 {
-				summ ln_return_eua if est_win == 1
+				summ ln_return_eua if est_win == 1 & date >= earliest_date
 				gen NR = r(mean)
 				scalar df = est_length - 10 // what exactly?
 			}
@@ -200,33 +200,46 @@
 							egen CARa = total(AR_`x'_`i') if ew_`x'_`i' == 1
 							summ CARa, meanonly
 							scalar CAR_ew_`x'_`i' = r(mean)
-							di "CAR_ew_`x'_`i'"
 	
 						* Pre-event
 							summ date if event_date_`x'_`i' == 1, meanonly
 							egen CARb = total(AR_`x'_`i') if ew_`x'_`i' == 1 & date < `r(mean)'
 							summ CARb, meanonly
 							scalar CAR_pre_`x'_`i' = r(mean)
-							di "CAR_pre_`x'_`i'"
 
 						* Post-event
 							summ date if event_date_`x'_`i' == 1, meanonly
 							egen CARc = total(AR_`x'_`i') if ew_`x'_`i' == 1 & date > `r(mean)'
 							summ CARc, meanonly
 							scalar CAR_post_`x'_`i' = r(mean)
-							di"CAR_post_`x'_`i'"
 
 						* Event Day
 							egen CARd = total(AR_`x'_`i') if event_date_`x'_`i' == 1
 							summ CARd, meanonly
 							scalar CAR_event_`x'_`i' = r(mean)
-							di "CAR_event_`x'_`i'"
 
 						capture drop CAR*
+
+						* Every single day within the event window
+							tab date if ew_`x'_`i' == 1, matrow(mat_`x'_`i')
+
+							local pre = event_length_pre
+							local post = event_length_post
+
+							forvalues t = -`pre'(1)`post' {
+								capture drop CAR*
+								local nom = `t' + event_length_pre + 1
+								egen CAR_temp = total(AR_`x'_`i') if date == mat_`x'_`i'[`nom', 1]
+								summ CAR_temp, meanonly
+								scalar CAR_d`nom'_`x'_`i' = `r(mean)'
+							}
+
+							capture drop CAR*
 					}
 				}
 			}
 		}
+
 
 	** Average CAR across dates and countries
 
