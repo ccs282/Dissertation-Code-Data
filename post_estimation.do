@@ -198,6 +198,17 @@
                         * Full Event window
                             scalar t_ew_`x'_`i' = CAR_ew_`x'_`i'/SD_CAR_ew_`x'_`i'
                             scalar p_ew_`x'_`i' = ttail(df ,abs(t_ew_`x'_`i'))*2
+                        
+                        * Individual days within event window
+
+							local pre = event_length_pre
+							local post = event_length_post
+
+                            forvalues t = -`pre'(1)`post' {
+                                local nom = `t' + event_length_pre + 1
+                                scalar t_d`nom'_`x'_`i' = CAR_d`nom'_`x'_`i'/SD_CAR_event_`x'_`i'
+                                scalar p_d`nom'_`x'_`i' = ttail(df ,abs(t_d`nom'_`x'_`i'))*2
+				            }
 					}
 				}
 			}

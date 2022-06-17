@@ -21,7 +21,7 @@
         
             matrix def avg = (CAR_pre_avg, CAR_event_avg, CAR_post_avg, CAR_ew_avg\ SD_CAR_pre_avg, SD_CAR_event_avg, SD_CAR_post_avg, SD_CAR_ew_avg \ p_pre_avg, p_event_avg, p_post_avg, p_ew_avg)
             matrix rown avg = CAR SD p-value
-            matrix coln avg = CAR_pre_avg CAR_event_avg CAR_post_avg CAR_event_window_avg
+            matrix coln avg = CAR_pre_avg CAR_event_avg CAR_post_avg CAR_ew_avg
             matrix list avg
         }
 
