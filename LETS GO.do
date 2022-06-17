@@ -18,7 +18,7 @@ Wrong Data:
 */
 
 *** PREP DATA
-	 do data_prep
+	quietly do data_prep
 
 	d
 
@@ -37,7 +37,7 @@ Wrong Data:
 		* Which dates to analyse?
 			
 			* Test one specific date only (independent of country exit dates)
-				scalar test_specific_date = "yes" // "yes" when determining one specific date only; must be unequal "yes" when analysing countries' coal phase-outs
+				scalar test_specific_date = "no" // "yes" when determining one specific date only; must be unequal "yes" when analysing countries' coal phase-outs
 
 				scalar date_specific = 20190128 // determine date to be tested if test_specific_date == "yes"
 
@@ -58,7 +58,7 @@ Wrong Data:
 			scalar event_length_pre = 3 // length of event window pre event (days)
 			scalar event_length_post = 3 // length of event window post event (days)
 
-			scalar est_length = 1000 // length of estimation window (days)
+			scalar est_length = 10000 // length of estimation window (days)
 			scalar earliest_date = 20080314 // earliest date for estimation window
 						
 			scalar reg_type = 1 // 1: constant mean return 2: statistical market model 3: wrong model 
@@ -77,7 +77,7 @@ Wrong Data:
 
 *** Estudy command
 
-	//estudy ln_return_eua_settle, datevar(stata_date) evdate(20130416) lb1(3) ub1(3) dateformat(YMD) indexlist(ln_return_eua_settle) modtype(HMM)
+	//estudy ln_return_eua, datevar(stata_date) evdate(20130416) lb1(3) ub1(3) dateformat(YMD) indexlist(ln_return_eua) modtype(HMM)
 
 
 // MSFE
@@ -86,7 +86,7 @@ Wrong Data:
 		di "-----------------------------NEXT ONE-----------------------------------"
 		di "reg 2013 + `i' to 2014 + `i'"
 		
-		reg mo1_px_settle L.mo1_px_settle $explanatory if year >= (2013 + `i') & 		year < (2014 + `i'), robust
+		reg mo1_px L.mo1_px $explanatory if year >= (2013 + `i') & 		year < (2014 + `i'), robust
 		estimates store reg`i'
 		
 		capture drop resids_within_`i'
@@ -111,7 +111,7 @@ Wrong Data:
 	forvalues i = 0(1)100 {
 		di "-----------------------------NEXT ONE-----------------------------------"
 		
-		reg mo1_px_settle L.mo1_px_settle $explanatory if date >= 20080401 & date <= 20090430, robust
+		reg mo1_px L.mo1_px $explanatory if date >= 20080401 & date <= 20090430, robust
 
 		
 		

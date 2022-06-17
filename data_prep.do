@@ -24,7 +24,7 @@
 		mmerge date using `var'
 		drop _merge
 		save data, replace
-		//erase "`var'.dta"
+		erase "`var'.dta"
 	}
 
 
@@ -38,6 +38,8 @@
 		use data, clear
 		mmerge date using eua
 		drop _merge
+		save data, replace
+		erase "eua.dta"
 
 
 
