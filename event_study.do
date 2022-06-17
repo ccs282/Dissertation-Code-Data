@@ -193,10 +193,10 @@
 			* Every single day within the event window
 				tab date if ew == 1, matrow(matrix_)
 
-				local pre = event_length_pre
-				local post = event_length_post
+				global pre = event_length_pre
+				global post = event_length_post
 
-				forvalues t = -`pre'(1)`post' {
+				forvalues t = -$pre(1)$post {
 					capture drop CAR*
 					local nom = `t' + event_length_pre + 1
 					egen CAR_temp = total(AR) if date == matrix_[`nom', 1]
@@ -240,11 +240,11 @@
 						* Every single day within the event window
 							tab date if ew_`x'_`i' == 1, matrow(mat_`x'_`i')
 
-							local pre = event_length_pre
-							local post = event_length_post
+							global pre = event_length_pre
+							global post = event_length_post
 
 							// let it run from 1 to ew_length instead? same outcome, easier though
-							forvalues t = -`pre'(1)`post' {
+							forvalues t = -$pre(1)$post {
 								capture drop CAR*
 								local nom = `t' + event_length_pre + 1
 								egen CAR_temp = total(AR_`x'_`i') if date == mat_`x'_`i'[`nom', 1]
@@ -325,11 +325,12 @@
                 capture drop v_*
 
 			* Every single day within the event window
+
 				foreach x in Germany UK Spain Italy Czech_Republic Netherlands France Romania Bulgaria Greece Others {
                     if `x'_num != 0 {
                         local temp = `x'_num
                         forvalues i = 1(1)`temp' {
-							forvalues t = -`pre'(1)`post' {
+							forvalues t = -$pre(1)$post {
 								local nom = `t' + event_length_pre + 1
 								capture drop v_CAR_d`nom'_`x'_`i'
                             	gen v_CAR_d`nom'_`x'_`i' = CAR_d`nom'_`x'_`i'
@@ -338,11 +339,10 @@
                     }
 			    }
 
-				forvalues t = -`pre'(1)`post' {
+				forvalues t = -$pre(1)$post {
 					local nom = `t' + event_length_pre + 1
 					egen v_CAR_d`nom'_avg = rowmean(v_CAR_d`nom'*)
                 	scalar CAR_d`nom'_avg = v_CAR_d`nom'_avg[1]
-                	capture drop v_CAR_d`nom'*
 				}
 				
 				capture drop v_*
