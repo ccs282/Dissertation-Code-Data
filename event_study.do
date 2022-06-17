@@ -51,7 +51,7 @@
 			capture drop est_win
 			gen est_win = .
 			summ trading_date if event_date == 1
-			replace est_win = 1 if (trading_date >= r(mean) - event_length_pre - est_length) & (trading_date < r(mean) - event_length_pre)
+			replace est_win = 1 if (trading_date >= r(mean) - event_length_pre - est_length) & (trading_date < r(mean) - event_length_pre) & (date >= earliest_date)
 		}
 
 		else {
@@ -62,7 +62,7 @@
 						capture drop est_win_`x'_`i'
 						gen est_win_`x'_`i' = .
 						summ trading_date if event_date_`x'_`i' == 1
-						replace est_win_`x'_`i' = 1 if (trading_date >= r(mean) - event_length_pre - est_length) & (trading_date < r(mean) - event_length_pre)
+						replace est_win_`x'_`i' = 1 if (trading_date >= r(mean) - event_length_pre - est_length) & (trading_date < r(mean) - event_length_pre) & (date >= earliest_date)
 					}
 				}
 			}	
@@ -74,19 +74,19 @@
 			capture drop NR
 
 			if reg_type == 1 {
-				summ ln_return_eua if est_win == 1 & date >= earliest_date
+				summ ln_return_eua if est_win == 1
 				gen NR = r(mean)
 				scalar df = est_length - 10 // what exactly?
 			}
 
 			else if reg_type == 2 {
-				reg ln_return_eua L.ln_return_eua $ln_return_explanatory if est_win == 1 & date >= earliest_date, robust
+				reg ln_return_eua L.ln_return_eua $ln_return_explanatory if est_win == 1, robust
 				predict NR
 				scalar df = e(df_m)
 			}
 
 			else if reg_type == 3 {
-				reg eua L.eua $explanatory if est_win == 1 & date >= earliest_date, robust
+				reg eua L.eua $explanatory if est_win == 1, robust
 				predict NR
 				scalar df = e(df_m)
 
@@ -110,14 +110,14 @@
 						}
 
 						else if reg_type == 2 {
-							reg ln_return_eua L.ln_return_eua $ln_return_explanatory if est_win_`x'_`i' == 1 & date >= earliest_date, robust
+							reg ln_return_eua L.ln_return_eua $ln_return_explanatory if est_win_`x'_`i' == 1, robust
 							predict NR_`x'_`i'
 							scalar df = e(df_m)
 
 						}
 
 						else if reg_type == 3 {
-							reg eua L.eua $explanatory if est_win_`x'_`i' == 1 & date >= earliest_date, robust
+							reg eua L.eua $explanatory if est_win_`x'_`i' == 1, robust
 							predict NR_`x'_`i'
 							scalar df = e(df_m)
 
@@ -189,6 +189,23 @@
 				scalar CAR_event = r(mean)
 			
 			capture drop CAR*
+
+			* Every single day within the event window
+				tab date if ew == 1, matrow(matrix_)
+
+				local pre = event_length_pre
+				local post = event_length_post
+
+				forvalues t = -`pre'(1)`post' {
+					capture drop CAR*
+					local nom = `t' + event_length_pre + 1
+					egen CAR_temp = total(AR) if date == matrix_[`nom', 1]
+					summ CAR_temp, meanonly
+					scalar CAR_d`nom' = `r(mean)'
+				}
+
+				capture drop CAR*
+
 		}
 
 		else {
@@ -226,6 +243,7 @@
 							local pre = event_length_pre
 							local post = event_length_post
 
+							// let it run from 1 to ew_length instead? same outcome, easier though
 							forvalues t = -`pre'(1)`post' {
 								capture drop CAR*
 								local nom = `t' + event_length_pre + 1
@@ -305,6 +323,29 @@
                 egen v_CAR_ew_avg = rowmean(v_CAR*)
                 scalar CAR_ew_avg = v_CAR_ew_avg[1]
                 capture drop v_*
+
+			* Every single day within the event window
+				foreach x in Germany UK Spain Italy Czech_Republic Netherlands France Romania Bulgaria Greece Others {
+                    if `x'_num != 0 {
+                        local temp = `x'_num
+                        forvalues i = 1(1)`temp' {
+							forvalues t = -`pre'(1)`post' {
+								local nom = `t' + event_length_pre + 1
+								capture drop v_CAR_d`nom'_`x'_`i'
+                            	gen v_CAR_d`nom'_`x'_`i' = CAR_d`nom'_`x'_`i'
+							}
+                        }
+                    }
+			    }
+
+				forvalues t = -`pre'(1)`post' {
+					local nom = `t' + event_length_pre + 1
+					egen v_CAR_d`nom'_avg = rowmean(v_CAR_d`nom'*)
+                	scalar CAR_d`nom'_avg = v_CAR_d`nom'_avg[1]
+                	capture drop v_CAR_d`nom'*
+				}
+				
+				capture drop v_*
 		}
 
 
