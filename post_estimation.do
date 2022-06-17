@@ -209,7 +209,7 @@
                                 scalar t_d`nom'_`x'_`i' = CAR_d`nom'_`x'_`i'/SD_CAR_event_`x'_`i'
                                 scalar p_d`nom'_`x'_`i' = ttail(df ,abs(t_d`nom'_`x'_`i'))*2
 				            }
-					}
+                    }
 				}
 			}
 
@@ -229,4 +229,11 @@
                 * Full Event window
                     scalar t_ew_avg = CAR_ew_avg/SD_CAR_ew_avg
                     scalar p_ew_avg = ttail(df ,abs(t_ew_avg))*2
+
+                * Individual days within event window
+                    forvalues t = -`pre'(1)`post' {
+                        local nom = `t' + event_length_pre + 1
+                        scalar t_d`nom'_avg = CAR_d`nom'_avg/SD_CAR_event_avg
+                        scalar p_d`nom'_avg = ttail(df ,abs(t_d`nom'_avg))*2
+				    }
         }
