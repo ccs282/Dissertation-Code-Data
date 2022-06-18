@@ -70,6 +70,7 @@
 		}
 
 	** Normal returns
+	// add zero mean return?
 		if test_specific_date == "yes" {
 			capture drop NR
 

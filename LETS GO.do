@@ -37,9 +37,9 @@ Wrong Data:
 		* Which dates to analyse?
 			
 			* Test one specific date only (independent of country exit dates)
-				scalar test_specific_date = "no" // "yes" when determining one specific date only; must be unequal "yes" when analysing countries' coal phase-outs
+				scalar test_specific_date = "yes" // "yes" when determining one specific date only; must be unequal "yes" when analysing countries' coal phase-outs
 
-				scalar date_specific = 20190128 // determine date to be tested if test_specific_date == "yes"
+				scalar date_specific = 20130416 // determine date to be tested if test_specific_date == "yes"
 
 			* Test coal phase-out dates from matrix 
 				scalar Germany_num = 		1 // 0-4
@@ -58,12 +58,12 @@ Wrong Data:
 			scalar event_length_pre = 3 // length of event window pre event (days)
 			scalar event_length_post = 3 // length of event window post event (days)
 
-			scalar est_length = 10000 // length of estimation window (days)
+			scalar est_length = 100000 // length of estimation window (days)
 			scalar earliest_date = 20080314 // earliest date for estimation window
 						
 			scalar reg_type = 1 // 1: constant mean return 2: statistical market model 3: wrong model 
 			
-			scalar show_days = 0 // 1: show not only pre / post estimations but also every single day
+			scalar show_days = 1 // 1: show not only pre / post estimations but also every single day
 
 	 quietly do event_study
 
@@ -81,7 +81,7 @@ Wrong Data:
 
 	//estudy ln_return_eua, datevar(stata_date) evdate(20130416) lb1(3) ub1(3) dateformat(YMD) indexlist(ln_return_eua) modtype(HMM)
 
-
+/*
 // MSFE
 
 	forvalues i = 0(1)9 {
@@ -118,4 +118,4 @@ Wrong Data:
 		
 		
 	}
-
+*/
