@@ -10,6 +10,7 @@
             summ TSS
             scalar TSS_aux = r(mean)
             summ trading_date if est_win == 1
+            // - 2 is only if two parameters need to be estimated?!
             scalar var_AR = (1/(r(max)-r(min)-2))*TSS_aux
             scalar SD_AR = sqrt(var_AR)
             capture drop AR_squared TSS 

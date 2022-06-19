@@ -11,10 +11,7 @@
 	/* Install package mmerge!*/
 
 /*
-Wrong Data:
-- EUA december ahead needed; currently MO1 used
-- offset prices same
-- check oil coal gas elec
+- data: choose variables by trading volume?!
 */
 
 *** PREP DATA
@@ -39,7 +36,7 @@ Wrong Data:
 			* Test one specific date only (independent of country exit dates)
 				scalar test_specific_date = "yes" // "yes" when determining one specific date only; must be unequal "yes" when analysing countries' coal phase-outs
 
-				scalar date_specific = 20130416 // determine date to be tested if test_specific_date == "yes"
+				scalar date_specific = 20130610 // determine date to be tested if test_specific_date == "yes"
 
 			* Test coal phase-out dates from matrix 
 				scalar Germany_num = 		1 // 0-4

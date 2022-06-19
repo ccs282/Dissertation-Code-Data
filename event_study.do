@@ -110,6 +110,7 @@
 
 						}
 
+						// determine lag length using AIC/BIC!!!
 						else if reg_type == 2 {
 							reg ln_return_eua L.ln_return_eua $ln_return_explanatory if est_win_`x'_`i' == 1, robust
 							predict NR_`x'_`i'
