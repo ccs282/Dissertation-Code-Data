@@ -36,29 +36,34 @@
 			* Test one specific date only (independent of country exit dates)
 				scalar test_specific_date = "yes" // "yes" when determining one specific date only; must be unequal "yes" when analysing countries' coal phase-outs
 
-				scalar date_specific = 20130610 // determine date to be tested if test_specific_date == "yes"
 
 			* Test coal phase-out dates from matrix 
-				scalar Germany_num = 		1 // 0-4
-				scalar UK_num = 			1 // 0-3
-				scalar Spain_num = 			1 // 0-4
-				scalar Italy_num = 			1 // 0-2
-				scalar Czech_Republic_num = 1 // 0-2
-				scalar Netherlands_num = 	1 // 0-3
-				scalar France_num = 		1 // 0-3
-				scalar Romania_num = 		1 // 0-3
-				scalar Bulgaria_num = 		1 // 0-1
-				scalar Greece_num = 		1 // 0-3
-				scalar Others_num = 		0 // 0-?
+				scalar Germany_num = 		0 // 0-4
+				scalar UK_num = 			0 // 0-3
+				scalar Spain_num = 			0 // 0-4
+				scalar Italy_num = 			0 // 0-2
+				scalar Czech_Republic_num = 0 // 0-2
+				scalar Netherlands_num = 	0 // 0-3
+				scalar France_num = 		0 // 0-3
+				scalar Romania_num = 		0 // 0-3
+				scalar Bulgaria_num = 		0 // 0-1
+				scalar Greece_num = 		0 // 0-3
+				scalar Others_num = 		2 // 0-?
 
+				
+				scalar date_specific = 20170301 // determine date to be tested if test_specific_date == "yes"
+
+				
 		* Event Study parameters
 			scalar event_length_pre = 3 // length of event window pre event (days)
 			scalar event_length_post = 3 // length of event window post event (days)
 
-			scalar est_length = 100000 // length of estimation window (days)
+
+			
+			scalar est_length = 250 // length of estimation window (days)
 			scalar earliest_date = 20080314 // earliest date for estimation window
 						
-			scalar reg_type = 1 // 1: constant mean return 2: statistical market model 3: wrong model 
+			scalar reg_type = 1 // 1: constant mean return 2: model with many explanatory variables 3: wrong model 
 			
 			scalar show_days = 1 // 1: show not only pre / post estimations but also every single day
 
@@ -81,11 +86,11 @@
 /*
 // MSFE
 
-	forvalues i = 0(1)9 {
+	forvalues i = 0(1)7 {
 		di "-----------------------------NEXT ONE-----------------------------------"
 		di "reg 2013 + `i' to 2014 + `i'"
 		
-		reg mo1_px L.mo1_px $explanatory if year >= (2013 + `i') & 		year < (2014 + `i'), robust
+		reg ln_return_eua L.ln_return_eua $ln_return_explanatory if year >= (2013 + `i') & year < (2014 + `i'), robust
 		estimates store reg`i'
 		
 		capture drop resids_within_`i'
@@ -104,9 +109,9 @@
 	}
 
 	esttab reg0 reg1 reg2 reg3 reg4
-	esttab reg5 reg6 reg7 reg8 reg9
-
-
+	esttab reg5 reg6 reg7
+*/
+/*
 	forvalues i = 0(1)100 {
 		di "-----------------------------NEXT ONE-----------------------------------"
 		

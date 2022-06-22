@@ -24,4 +24,7 @@
 		count if date >= 20110314 & date <= 20120313
 		count if date >= 20120314 & date <= 20130313
 		count if date >= 20130314 & date <= 20140313*/
-	
+
+** Augmented Dickey-Fuller Test
+
+dfuller gas, regress
