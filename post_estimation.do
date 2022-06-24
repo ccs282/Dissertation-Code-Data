@@ -11,6 +11,7 @@
             scalar TSS_aux = r(mean)
             summ trading_date if est_win == 1
             // - 2 is only if two parameters need to be estimated?!
+            // formula wrong?! what is subtracted (number of variables used in calculation) and r(max)-r(min) doesnt consider missing values
             scalar var_AR = (1/(r(max)-r(min)-2))*TSS_aux
             scalar SD_AR = sqrt(var_AR)
             capture drop AR_squared TSS 
@@ -198,19 +199,19 @@
 					forvalues i = 1(1)`temp' {
                         * Pre-event
                             scalar t_pre_`x'_`i' = CAR_pre_`x'_`i'/SD_CAR_pre_`x'_`i'
-                            scalar p_pre_`x'_`i' = ttail(df ,abs(t_pre_`x'_`i'))*2
+                            scalar p_pre_`x'_`i' = ttail(df_`x'_`i' ,abs(t_pre_`x'_`i'))*2
 
                         * Event day
                             scalar t_event_`x'_`i' = CAR_event_`x'_`i'/SD_CAR_event_`x'_`i'
-                            scalar p_event_`x'_`i' = ttail(df ,abs(t_event_`x'_`i'))*2
+                            scalar p_event_`x'_`i' = ttail(df_`x'_`i' ,abs(t_event_`x'_`i'))*2
 
                         * Post-event
                             scalar t_post_`x'_`i' = CAR_post_`x'_`i'/SD_CAR_post_`x'_`i'
-                            scalar p_post_`x'_`i' = ttail(df ,abs(t_post_`x'_`i'))*2
+                            scalar p_post_`x'_`i' = ttail(df_`x'_`i' ,abs(t_post_`x'_`i'))*2
                             
                         * Full Event window
                             scalar t_ew_`x'_`i' = CAR_ew_`x'_`i'/SD_CAR_ew_`x'_`i'
-                            scalar p_ew_`x'_`i' = ttail(df ,abs(t_ew_`x'_`i'))*2
+                            scalar p_ew_`x'_`i' = ttail(df_`x'_`i' ,abs(t_ew_`x'_`i'))*2
                         
                         * Individual days within event window
 
@@ -220,13 +221,16 @@
                             forvalues t = -`pre'(1)`post' {
                                 local nom = `t' + event_length_pre + 1
                                 scalar t_d`nom'_`x'_`i' = CAR_d`nom'_`x'_`i'/SD_CAR_event_`x'_`i'
-                                scalar p_d`nom'_`x'_`i' = ttail(df ,abs(t_d`nom'_`x'_`i'))*2
+                                scalar p_d`nom'_`x'_`i' = ttail(df_`x'_`i' ,abs(t_d`nom'_`x'_`i'))*2
 				            }
                     }
 				}
 			}
 
             * Average CAR
+
+                // temp, adapt later
+                scalar df = est_length - 15
                 * Pre-event
                     scalar t_pre_avg = CAR_pre_avg/SD_CAR_pre_avg
                     scalar p_pre_avg = ttail(df ,abs(t_pre_avg))*2
