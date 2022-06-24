@@ -143,13 +143,7 @@
 					local temp = `x'_num
 					forvalues i = 1(1)`temp' {
 						capture drop AR_`x'_`i'
-						if reg_type == 3 {
-							gen AR_`x'_`i' = eua - NR_`x'_`i'
-						}
-						else {
-							gen AR_`x'_`i' = ln_return_eua - NR_`x'_`i'
-
-						}
+						gen AR_`x'_`i' = ln_return_eua - NR_`x'_`i'
 					}
 				}
 			}	
