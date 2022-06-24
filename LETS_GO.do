@@ -38,7 +38,7 @@
 
 
 			* Test coal phase-out dates from matrix 
-				scalar Germany_num = 		0 // 0-4
+				scalar Germany_num = 		3 // 0-4
 				scalar UK_num = 			0 // 0-3
 				scalar Spain_num = 			0 // 0-4
 				scalar Italy_num = 			0 // 0-2
@@ -48,24 +48,23 @@
 				scalar Romania_num = 		0 // 0-3
 				scalar Bulgaria_num = 		0 // 0-1
 				scalar Greece_num = 		0 // 0-3
-				scalar Others_num = 		2 // 0-?
+				scalar Others_num = 		0 // 0-?
+				
+				scalar date_specific = 20190128 // determine date to be tested if test_specific_date == "yes"
 
 				
-				scalar date_specific = 20170301 // determine date to be tested if test_specific_date == "yes"
-
-				
-		* Event Study parameters
+		* Event Study Settings
 			scalar event_length_pre = 3 // length of event window pre event (days)
 			scalar event_length_post = 3 // length of event window post event (days)
 
-
-			
 			scalar est_length = 250 // length of estimation window (days)
 			scalar earliest_date = 20080314 // earliest date for estimation window
 						
-			scalar reg_type = 1 // 1: constant mean return 2: model with many explanatory variables 3: wrong model 
+			scalar reg_type = 1 // 1: constant mean return 2: zero mean return 3: model with many explanatory variables 
 			
 			scalar show_days = 1 // 1: show not only pre / post estimations but also every single day
+
+			scalar treat_missing = 0 // 0: XXX; 1: XXX; 2: XXXX; 3: XXX
 
 	 quietly do event_study
 
