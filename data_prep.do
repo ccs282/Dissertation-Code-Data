@@ -1,7 +1,7 @@
 
 ** explanatory variables 
 	
-	global explanatory oil coal gas elec gsci vix stoxx diff_baa_aaa cer ecb_spot_3m
+	global explanatory oil coal gas elec gsci vix stoxx diff_baa_aaa ecb_spot_3m
 
 /*
 	foreach var of global explanatory {
@@ -21,6 +21,7 @@
 		keep ln_return_`var' date
 		save, replace
 		use data, clear
+		// why not use date as matching variable?
 		mmerge date using `var'
 		drop _merge
 		save data, replace
@@ -28,29 +29,34 @@
 	}
 
 
-		drop if eua == .
-		capture drop ln_return_eua
-		gen ln_return_eua = ln(eua[_n] / eua[_n - 1]) if _n > 1
-		save eua, replace
-		use eua, clear
-		keep ln_return_eua date
-		save, replace
-		use data, clear
-		mmerge date using eua
-		drop _merge
-		save data, replace
-		erase "eua.dta"
 
 
 
+	global ln_return_explanatory ln_return_oil ln_return_coal ln_return_gas ln_return_elec ln_return_gsci ln_return_vix ln_return_stoxx ln_return_diff_baa_aaa ln_return_ecb_spot_3m
 
-	global ln_return_explanatory ln_return_oil ln_return_coal ln_return_gas ln_return_elec ln_return_gsci ln_return_vix ln_return_stoxx ln_return_diff_baa_aaa ln_return_cer ln_return_ecb_spot_3m
-	
+/*
+	L.ln_return_oil L.ln_return_coal L.ln_return_gas L.ln_return_elec L.ln_return_gsci L.ln_return_vix L.ln_return_stoxx L.ln_return_diff_baa_aaa L.ln_return_cer L.ln_return_ecb_spot_3m
+	*/
+
 	capture drop aaa baa
 	
 ** explained/dependent variable
 	
-		
+	drop if eua == .
+	capture drop ln_return_eua
+	gen ln_return_eua = ln(eua[_n] / eua[_n - 1]) if _n > 1
+	save eua, replace
+	use eua, clear
+	keep ln_return_eua date
+	save, replace
+	use data, clear
+	// why not use date as matching variable?
+	mmerge date using eua
+	drop _merge
+	save data, replace
+	erase "eua.dta"
+
+
 	order ln_return_eua, after(eua)
 	
 	* Create lagged dependent variable
@@ -66,7 +72,10 @@
 
 ** Prep time series
 
-	//drop if date <= 20080403 // Koch et al. (2014) use 20080314; but there's a jump in EUA prices on April 2 in my data
+	drop if date <= 20080314 // same as Koch et al. (2016)
+	replace eua = . if eua == 0 // 6 wrong values
+
+	//drop if oil == .| coal == .| gas == .| elec gsci vix stoxx diff_baa_aaa ecb_spot_3m
 
 	capture drop year month day stata_date
 	gen year = int(date/10000) 
@@ -76,6 +85,7 @@
 	order stata_date, after(date)
 	format stata_date  %td
 
+	// check if still at the right place after having dealt with missing values
 	capture drop trading_date
 	gen trading_date = 1
 	replace trading_date = trading_date[_n-1] + 1 if _n != 1 // there are missing dates (weekends etc.)
