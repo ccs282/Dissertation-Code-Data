@@ -70,29 +70,30 @@
 		}
 
 	** Normal returns
-	// add zero mean return?
 		if test_specific_date == "yes" {
 			capture drop NR
 
+		* Constant mean
 			if reg_type == 1 {
-				summ ln_return_eua if est_win == 1
-				gen NR = r(mean)
-				scalar df = est_length - 10 // what exactly?
+				reg ln_return_eua est_win if est_win == 1, robust noconst
+				gen NR = e(b)[1, 1]
+				scalar df = e(df_r)
 			}
 
+		* Zero mean
 			else if reg_type == 2 {
+				gen NR = 0
+				reg ln_return_eua est_win if est_win == 1, robust noconst
+				scalar df = e(df_r)
+			}
+
+		* Koch et al. (2016) variables model
+			else if reg_type == 3 {
 				reg ln_return_eua L.ln_return_eua $ln_return_explanatory if est_win == 1, robust
 				predict NR
-				scalar df = e(df_m)
+				scalar df = e(df_r)
 			}
 
-			else if reg_type == 3 {
-				reg eua L.eua $explanatory if est_win == 1, robust
-				predict NR
-				scalar df = e(df_m)
-
-			}
-			
 			order NR, after(ln_return_eua) 
 		}
 
@@ -103,26 +104,26 @@
 					forvalues i = 1(1)`temp' {
 						capture drop NR_`x'_`i'
 
+					* Constant Mean
 						if reg_type == 1 {
-							summ ln_return_eua if est_win_`x'_`i' == 1
-							gen NR_`x'_`i' = r(mean)
-							scalar df = est_length - 10 // what exactly?
-
+							reg ln_return_eua est_win_`x'_`i' if est_win_`x'_`i' == 1, robust noconst
+							gen NR_`x'_`i' = e(b)[1, 1]
+							scalar df_`x'_`i' = e(df_r)
 						}
 
-						// determine lag length using AIC/BIC!!!
+					* Zero Mean
 						else if reg_type == 2 {
+							gen NR_`x'_`i' = 0
+							reg ln_return_eua est_win_`x'_`i' if est_win_`x'_`i' == 1, robust noconst
+							scalar df_`x'_`i' = e(df_r)
+						}
+
+					* Koch et al. (2016) variables model
+						else if reg_type == 3 {
+							// determine lag length using AIC/BIC!!!
 							reg ln_return_eua L.ln_return_eua $ln_return_explanatory if est_win_`x'_`i' == 1, robust
 							predict NR_`x'_`i'
-							scalar df = e(df_m)
-
-						}
-
-						else if reg_type == 3 {
-							reg eua L.eua $explanatory if est_win_`x'_`i' == 1, robust
-							predict NR_`x'_`i'
-							scalar df = e(df_m)
-
+							scalar df_`x'_`i' = e(df_r)
 						}
 					}
 				}
