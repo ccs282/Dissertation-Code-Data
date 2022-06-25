@@ -15,6 +15,7 @@
 */
 
 *** PREP DATA
+	scalar treat_missing = 0 // 0: let Stata deal with missing values; 1: drop all observation for which there is a missing value in one of the explanatory variables or outcome variable; 2: XXXX; 3: XXX
 	quietly do data_prep
 
 	d
@@ -60,11 +61,10 @@
 			scalar est_length = 250 // length of estimation window (days)
 			scalar earliest_date = 20080314 // earliest date for estimation window
 						
-			scalar reg_type = 1 // 1: constant mean return 2: zero mean return 3: model with many explanatory variables 
+			scalar reg_type = 3 // 1: constant mean return 2: zero mean return 3: model with many explanatory variables 
 			
 			scalar show_days = 1 // 1: show not only pre / post estimations but also every single day
 
-			scalar treat_missing = 0 // 0: XXX; 1: XXX; 2: XXXX; 3: XXX
 
 	 quietly do event_study
 
