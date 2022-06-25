@@ -75,7 +75,19 @@
 	drop if date <= 20080314 // same as Koch et al. (2016)
 	replace eua = . if eua == 0 // 6 wrong values
 
-	//drop if oil == .| coal == .| gas == .| elec gsci vix stoxx diff_baa_aaa ecb_spot_3m
+	* drop all observations that have a missing value for one of the explanatory variables or the dependent variable
+		if treat_missing == 1 {
+			drop if oil == .| coal == .| gas == .| elec == .| gsci == .| vix == .| stoxx == .| diff_baa_aaa == .| ecb_spot_3m == .| ln_return_eua == .
+		} 
+
+		else if treat_missing == 2 {
+			//
+		}
+
+		else if treat_missing == 3{
+			//
+		}
+
 
 	capture drop year month day stata_date
 	gen year = int(date/10000) 
