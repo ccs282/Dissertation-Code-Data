@@ -141,6 +141,75 @@ forvalues i=1(1)5 {
 	esttab reg0 reg1 reg2 reg3 reg4
 	esttab reg5 reg6 reg7
 */
+
+	
+	// Set aside inital observations
+	
+	capture drop MSFE
+	capture drop RMSFE
+	capture drop MAFE
+
+	forvalues k = 0(7)7{
+		if est_length <= 255 {
+			
+		* estimation window + event window for forecast error
+		capture drop est_win_fe
+		gen est_win_fe = .
+		summ trading_date if date == 20080401
+		replace est_win_fe = 1 if trading_date >= (r(mean)+ `k') & trading_date < (r(mean)+ `k' + est_length) // change k in first part of if condition for extending est window
+
+		capture drop ew_fe
+		gen ew_fe = .
+		summ trading_date if date == 20080401
+		replace ew_fe = 1 if trading_date >= (r(mean)+ `k' + est_length) & trading_date < (r(mean)+ `k' + est_length + event_length_post + event_length_pre + 1)
+
+		
+		* coefficients calibration
+		reg ln_return_eua L.ln_return_eua $ln_return_explanatory if est_win_fe == 1, robust // necessary?
+
+		capture drop tempv
+		summ trading_date if date == 20080401
+		gen tempv = ln_return_eua if trading_date < (r(mean)+ `k' + est_length)
+		reg tempv L.tempv $ln_return_explanatory if est_win_fe == 1, robust
+
+		* 7 step-ahead prediction
+		local ew_length = event_length_post + event_length_pre + 1
+		forvalues i = 1(1)`ew_length' {
+			summ trading_date if date == 20080401
+			predict NR_`i' if trading_date == (r(mean)+ `k' + est_length -1 + `i')
+			replace tempv = NR_`i' if trading_date == (r(mean)+ `k' + est_length -1 + `i')
+		}
+		capture drop NR_*
+
+		capture drop fe 
+		gen fe = tempv - ln_return_eua if ew_fe == 1
+
+		capture drop fe_abs
+		gen fe_abs = abs(fe)
+
+		capture drop fe_squared
+		gen fe_squared = fe^2
+
+		capture gen MSFE = .
+		summ fe_squared
+		replace MSFE = r(mean) if _n == `k' + 1
+
+		capture gen RMSFE = .
+		replace RMSFE = sqrt(MSFE)
+
+		capture gen MAFE = .
+		summ fe_abs
+		replace MAFE =  r(mean) if _n == `k' + 1
+		
+		capture drop fe*
+		}
+	}
+	
+	
+	// add changed estimated length + different estimation methods
+	
+	
+	
 /*
 	forvalues i = 0(1)100 {
 		di "-----------------------------NEXT ONE-----------------------------------"
