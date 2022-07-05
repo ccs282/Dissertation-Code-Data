@@ -109,7 +109,6 @@
 				}
 
 				drop NR_* tempv
-
 			}
 
 			order NR, after(ln_return_eua) 
@@ -140,8 +139,25 @@
 						else if reg_type == 3 {
 							// determine lag length using AIC/BIC!!!
 							reg ln_return_eua L.ln_return_eua $ln_return_explanatory if est_win_`x'_`i' == 1, robust
-							predict NR_`x'_`i'
 							scalar df_`x'_`i' = e(df_r)
+
+							predict NR_`x'_`i' if est_win_`x'_`i' == 1
+
+							summ trading_date if event_date_`x'_`i' == 1
+							capture drop tempv = . 
+							gen tempv = ln_return_eua if trading_date < (r(mean) - event_length_pre) // create a temporary variable for the recursive estimation (bc. of the lagged dependent variable)
+
+							reg tempv L.tempv $ln_return_explanatory if est_win_`x'_`i' == 1, robust
+				
+							local ew_length = event_length_post + event_length_pre + 1
+							forvalues j = 1(1)`ew_length' {
+								summ trading_date if event_date_`x'_`i' == 1
+								predict NR_`x'_`i'_`j' if trading_date == (r(mean) - event_length_pre -1 + `j')
+								replace tempv = NR_`x'_`i'_`j' if trading_date == (r(mean) - event_length_pre -1 + `j')
+								replace NR_`x'_`i' = NR_`x'_`i'_`j' if trading_date == (r(mean) - event_length_pre -1 + `j')
+							}
+
+							drop NR_`x'_`i'_* tempv
 						}
 					}
 				}
