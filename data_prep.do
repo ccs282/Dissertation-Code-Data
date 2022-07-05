@@ -80,7 +80,7 @@
 
 	* drop all observations that have a missing value for one of the explanatory variables or the dependent variable
 		if treat_missing == 1 {
-			drop if oil == .| coal == .| gas == .| elec == .| gsci == .| vix == .| stoxx == .| diff_baa_aaa == .| ecb_spot_3m == .| ln_return_eua == .
+			drop if ln_return_oil == .| ln_return_coal == .| ln_return_gas == .| ln_return_elec == .| ln_return_gsci == .| ln_return_vix == .| ln_return_stoxx == .| ln_return_diff_baa_aaa == .| ln_return_ecb_spot_3m == .| ln_return_eua == .
 		} 
 
 		else if treat_missing == 2 {
