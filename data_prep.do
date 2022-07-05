@@ -73,6 +73,9 @@
 ** Prep time series
 
 	drop if date <= 20080314 // same as Koch et al. (2016)
+	//drop if date <= 20121231 // drop Phases I+II
+
+
 	replace eua = . if eua == 0 // 6 wrong values
 
 	* drop all observations that have a missing value for one of the explanatory variables or the dependent variable

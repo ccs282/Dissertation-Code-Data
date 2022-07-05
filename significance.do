@@ -30,8 +30,6 @@
 
                                 matlist `x'_days, lines(rowt) title("`x'_`i': Individual Days (`r(mean)')")
                             }
-
-
 					}
 				}
 			}
