@@ -40,25 +40,25 @@
 
 			* Test coal phase-out dates from matrix 
 				scalar Germany_num = 		1 // 0-4
-				scalar UK_num = 			0 // 0-3
-				scalar Spain_num = 			0 // 0-4
-				scalar Italy_num = 			0 // 0-2
-				scalar Czech_Republic_num = 0 // 0-2
-				scalar Netherlands_num = 	0 // 0-3
+				scalar UK_num = 			1 // 0-3
+				scalar Spain_num = 			1 // 0-4
+				scalar Italy_num = 			1 // 0-2
+				scalar Czech_Republic_num = 1 // 0-2
+				scalar Netherlands_num = 	1 // 0-3
 				scalar France_num = 		1 // 0-3
-				scalar Romania_num = 		0 // 0-3
-				scalar Bulgaria_num = 		0 // 0-1
-				scalar Greece_num = 		0 // 0-3
+				scalar Romania_num = 		1 // 0-3
+				scalar Bulgaria_num = 		1 // 0-1
+				scalar Greece_num = 		1 // 0-3
 				scalar Others_num = 		0 // 0-?
 				
-				scalar date_specific = 20220107 // determine date to be tested if test_specific_date == "yes"
+				scalar date_specific = 20190128 // determine date to be tested if test_specific_date == "yes"
 
 				
 		* Event Study Settings
 			scalar event_length_pre = 3 // length of event window pre event (days)
 			scalar event_length_post = 3 // length of event window post event (days)
 
-			scalar est_length = 250000 // length of estimation window (days)
+			scalar est_length = 255 // length of estimation window (days)
 			scalar earliest_date = 20080314 // earliest date for estimation window
 						
 			scalar reg_type = 3 // 1: constant mean return 2: zero mean return 3: model with many explanatory variables 
@@ -66,7 +66,7 @@
 			scalar show_days = 1 // 1: show not only pre / post estimations but also every single day
 
 
-	 quietly do event_study
+	  quietly do event_study
 
 *** Postestimation: Test significance
 	quietly do post_estimation
@@ -90,7 +90,7 @@ foreach var of varlist oil coal gas elec gsci vix stoxx diff_baa_aaa ecb_spot_3m
 	summ ln_return_`var' if date > 20080313 & date < 20140501, d
 }
 
-tabstat ln_return_eua ln_return_oil ln_return_coal ln_return_gas ln_return_elec ln_return_gsci ln_return_vix ln_return_stoxx ln_return_diff_baa_aaa ln_return_ecb_spot_3m if date > 20080313 & date < 20140501, s(mean sd sk k max min)
+tabstat ln_return_eua ln_return_oil ln_return_coal ln_return_gas ln_return_elec ln_return_gsci ln_return_vix ln_return_stoxx ln_return_diff_baa_aaa ln_return_ecb_spot_3m if date > 20080313 & date < 20140501, stat(mean sd sk k min max)
 
 
 capture drop missing
@@ -113,9 +113,11 @@ forvalues i=1(1)5 {
 
 	//estudy ln_return_eua, datevar(stata_date) evdate(20130416) lb1(3) ub1(3) dateformat(YMD) indexlist(ln_return_eua) modtype(HMM)
 
-/*
-// MSFE
+	*/
+	
 
+// MSFE
+/*
 	forvalues i = 0(1)7 {
 		di "-----------------------------NEXT ONE-----------------------------------"
 		di "reg 2013 + `i' to 2014 + `i'"
@@ -220,3 +222,30 @@ forvalues i=1(1)5 {
 		
 	}
 */
+
+
+reg ln_return_eua L.ln_return_eua $ln_return_explanatory if est_win == 1, robust
+
+tsset stata_date
+
+/*
+save, replace
+rolling, window(7) stepsize(100): reg ln_return_eua L.ln_return_eua $ln_return_explanatory, robust
+*/
+
+
+foreach var of global ln_return_explanatory {
+	codebook `var'
+}
+
+forvalues i=2009(1)2021{
+	count if year == `i'
+	global trading_days_`i' = r(N)
+	gen xxx_`i' = r(N)
+}
+
+capture drop year_obs
+egen year_obs = rowmean(xx*)
+di year_obs[1]
+
+
