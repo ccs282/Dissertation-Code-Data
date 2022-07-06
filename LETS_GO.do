@@ -116,36 +116,6 @@ forvalues i=1(1)5 {
 	*/
 	
 
-// MSFE
-/*
-	forvalues i = 0(1)7 {
-		di "-----------------------------NEXT ONE-----------------------------------"
-		di "reg 2013 + `i' to 2014 + `i'"
-		
-		reg ln_return_eua L.ln_return_eua $ln_return_explanatory if year >= (2013 + `i') & year < (2014 + `i'), robust
-		estimates store reg`i'
-		
-		capture drop resids_within_`i'
-		predict double resids_within_`i' if year >= (2013 + `i') & year < (2014 + `i'), residuals
-		capture drop resids_within_sqr_`i'
-		gen resids_within_sqr_`i' = resids_within_`i'^2
-		summ resids_within_sqr_`i'
-		scalar MSFE_within_`i' = r(mean)
-		
-		capture drop resids_out_`i'
-		predict double resids_out_`i' if year > (2013 + `i'), residuals
-		capture drop resids_out_sqr_`i'
-		gen resids_out_sqr_`i' = resids_out_`i'^2
-		summ resids_out_sqr_`i'
-		scalar MSFE_out_`i' = r(mean)
-	}
-
-	esttab reg0 reg1 reg2 reg3 reg4
-	esttab reg5 reg6 reg7
-*/
-
-	
-	// Set aside inital observations
 	
 	capture drop MSFE
 	capture drop RMSFE
