@@ -95,7 +95,7 @@
 				predict NR if est_win == 1
 
 				summ trading_date if event_date == 1
-				capture drop tempv = . 
+				capture drop tempv 
 				gen tempv = ln_return_eua if trading_date < (r(mean) - event_length_pre) // create a temporary variable for the recursive estimation (bc. of the lagged dependent variable)
 
 				reg tempv L.tempv $ln_return_explanatory if est_win == 1, robust
