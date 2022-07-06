@@ -116,42 +116,50 @@ forvalues i=1(1)5 {
 	*/
 	
 
+*** MSFE, RMSFE, MAFE
 	
 	capture drop MSFE
 	capture drop RMSFE
 	capture drop MAFE
+	capture drop NR_*
+	capture drop yhat
 
-	forvalues k = 0(7)7{
-		if est_length <= 255 {
+	forvalues k = 0(7)140000{
 			
 		* estimation window + event window for forecast error
-		capture drop est_win_fe
-		gen est_win_fe = .
-		summ trading_date if date == 20080401
-		replace est_win_fe = 1 if trading_date >= (r(mean)+ `k') & trading_date < (r(mean)+ `k' + est_length) // change k in first part of if condition for extending est window
+		capture drop event_date_fe
+		gen event_date_fe = .
+		summ trading_date if date == 20090403
+		replace event_date_fe = 1 if trading_date == r(mean) + `k'
 
 		capture drop ew_fe
 		gen ew_fe = .
-		summ trading_date if date == 20080401
-		replace ew_fe = 1 if trading_date >= (r(mean)+ `k' + est_length) & trading_date < (r(mean)+ `k' + est_length + event_length_post + event_length_pre + 1)
+		summ trading_date if event_date_fe == 1
+		replace ew_fe = 1 if (trading_date >= r(mean) - event_length_pre) & (trading_date <= r(mean) + event_length_post)
 
+		capture drop est_win_fe
+		gen est_win_fe = .
+		summ trading_date if event_date_fe == 1
+		replace est_win_fe = 1 if (trading_date >= r(mean) - event_length_pre - est_length) & (trading_date < r(mean) - event_length_pre) & (date >= 20080401)
 		
 		* coefficients calibration
-		reg ln_return_eua L.ln_return_eua $ln_return_explanatory if est_win_fe == 1, robust // necessary?
-
-		capture drop tempv
-		summ trading_date if date == 20080401
-		gen tempv = ln_return_eua if trading_date < (r(mean)+ `k' + est_length)
+		capture drop tempv 
+		summ trading_date if event_date_fe == 1
+		gen tempv = ln_return_eua if trading_date < (r(mean) - event_length_pre) 
 		reg tempv L.tempv $ln_return_explanatory if est_win_fe == 1, robust
 
 		* 7 step-ahead prediction
+
 		local ew_length = event_length_post + event_length_pre + 1
 		forvalues i = 1(1)`ew_length' {
-			summ trading_date if date == 20080401
-			predict NR_`i' if trading_date == (r(mean)+ `k' + est_length -1 + `i')
-			replace tempv = NR_`i' if trading_date == (r(mean)+ `k' + est_length -1 + `i')
+			summ trading_date if event_date_fe == 1
+			predict NR_`i' if trading_date == (r(mean) - event_length_pre -1 + `i')
+			replace tempv = NR_`i' if trading_date == (r(mean) - event_length_pre -1 + `i')
 		}
 		capture drop NR_*
+
+		capture gen yhat = . 
+		replace yhat = tempv if ew_fe == 1
 
 		capture drop fe 
 		gen fe = tempv - ln_return_eua if ew_fe == 1
@@ -164,22 +172,23 @@ forvalues i=1(1)5 {
 
 		capture gen MSFE = .
 		summ fe_squared
-		replace MSFE = r(mean) if _n == `k' + 1
+		replace MSFE = r(mean) if event_date_fe == 1
 
 		capture gen RMSFE = .
 		replace RMSFE = sqrt(MSFE)
 
 		capture gen MAFE = .
 		summ fe_abs
-		replace MAFE =  r(mean) if _n == `k' + 1
+		replace MAFE =  r(mean) if event_date_fe == 1
 		
 		capture drop fe*
-		}
 	}
 	
-	
 	// add changed estimated length + different estimation methods
-	
+	// add to save estimation results (NR)
+		
+twoway line RMSFE MAFE stata_date if year < 2020 & year > 2018, xlabel(, angle(vertical))
+twoway line ln_return_eua yhat stata_date if year < 2020 & year > 2018, xlabel(, angle(vertical))
 	
 	
 /*
@@ -193,7 +202,7 @@ forvalues i=1(1)5 {
 	}
 */
 
-
+/*
 reg ln_return_eua L.ln_return_eua $ln_return_explanatory if est_win == 1, robust
 
 tsset stata_date
@@ -217,5 +226,5 @@ forvalues i=2009(1)2021{
 capture drop year_obs
 egen year_obs = rowmean(xx*)
 di year_obs[1]
-
+*/
 
