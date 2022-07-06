@@ -122,11 +122,11 @@ forvalues i=1(1)5 {
 	capture drop RMSFE
 	capture drop MAFE
 	capture drop NR_*
-	capture drop yhat
+	capture drop yhat*
 
-	forvalues k = 0(7)140000{
+	forvalues k = 0(7)210000{
 			
-		* estimation window + event window for forecast error
+		** estimation window + event window for forecast error
 		capture drop event_date_fe
 		gen event_date_fe = .
 		summ trading_date if date == 20090403
@@ -142,54 +142,78 @@ forvalues i=1(1)5 {
 		summ trading_date if event_date_fe == 1
 		replace est_win_fe = 1 if (trading_date >= r(mean) - event_length_pre - est_length) & (trading_date < r(mean) - event_length_pre) & (date >= 20080401)
 		
-		* coefficients calibration
-		capture drop tempv 
-		summ trading_date if event_date_fe == 1
-		gen tempv = ln_return_eua if trading_date < (r(mean) - event_length_pre) 
-		reg tempv L.tempv $ln_return_explanatory if est_win_fe == 1, robust
+		foreach x in variables const_mean zero_mean{
+			
+			** generate predictions
+			if  "`x'" == "variables" {
+				capture drop tempv 
+				summ trading_date if event_date_fe == 1
+				gen tempv = ln_return_eua if trading_date < (r(mean) - event_length_pre) 
+				reg tempv L.tempv $ln_return_explanatory if est_win_fe == 1, robust
 
-		* 7 step-ahead prediction
+				local ew_length = event_length_post + event_length_pre + 1
+				forvalues i = 1(1)`ew_length' {
+					summ trading_date if event_date_fe == 1
+					predict NR_`i' if trading_date == (r(mean) - event_length_pre -1 + `i')
+					replace tempv = NR_`i' if trading_date == (r(mean) - event_length_pre -1 + `i')
+					capture gen NR_`x'= .
+					replace NR_`x' = NR_`i' if trading_date == (r(mean) - event_length_pre -1 + `i')
+				}
+			}
 
-		local ew_length = event_length_post + event_length_pre + 1
-		forvalues i = 1(1)`ew_length' {
-			summ trading_date if event_date_fe == 1
-			predict NR_`i' if trading_date == (r(mean) - event_length_pre -1 + `i')
-			replace tempv = NR_`i' if trading_date == (r(mean) - event_length_pre -1 + `i')
+			else if "`x'" == "const_mean" {
+				reg ln_return_eua est_win_fe if est_win_fe == 1, robust noconst
+				gen NR_`x' = e(b)[1, 1]
+			}
+
+			else if "`x'" == "zero_mean" {
+				gen NR_`x' = 0
+
+			}
+
+			** yhat, MSFE, RMSFE, MAFE
+
+			capture gen yhat_`x' = . 
+			replace yhat_`x' = NR_`x' if ew_fe == 1
+				
+			capture drop NR_*
+
+			capture drop fe_`x' 
+			gen fe_`x' = yhat_`x' - ln_return_eua if ew_fe == 1
+
+			capture drop fe_abs_`x'
+			gen fe_abs_`x' = abs(fe_`x')
+
+			capture drop fe_squared_`x'
+			gen fe_squared_`x' = fe_`x'^2
+
+			capture gen MSFE_`x' = .
+			summ fe_squared_`x'
+			replace MSFE_`x' = r(mean) if event_date_fe == 1
+
+			capture gen RMSFE_`x' = .
+			replace RMSFE_`x' = sqrt(MSFE_`x')
+
+			capture gen MAFE_`x' = .
+			summ fe_abs_`x'
+			replace MAFE_`x' =  r(mean) if event_date_fe == 1
+			
+			capture drop fe*
 		}
-		capture drop NR_*
-
-		capture gen yhat = . 
-		replace yhat = tempv if ew_fe == 1
-
-		capture drop fe 
-		gen fe = tempv - ln_return_eua if ew_fe == 1
-
-		capture drop fe_abs
-		gen fe_abs = abs(fe)
-
-		capture drop fe_squared
-		gen fe_squared = fe^2
-
-		capture gen MSFE = .
-		summ fe_squared
-		replace MSFE = r(mean) if event_date_fe == 1
-
-		capture gen RMSFE = .
-		replace RMSFE = sqrt(MSFE)
-
-		capture gen MAFE = .
-		summ fe_abs
-		replace MAFE =  r(mean) if event_date_fe == 1
-		
-		capture drop fe*
 	}
 	
-	// add changed estimated length + different estimation methods
-	// add to save estimation results (NR)
-		
-twoway line RMSFE MAFE stata_date if year < 2020 & year > 2018, xlabel(, angle(vertical))
-twoway line ln_return_eua yhat stata_date if year < 2020 & year > 2018, xlabel(, angle(vertical))
 	
+
+foreach y in MSFE RMSFE MAFE {
+	tabstat `y'_variables `y'_const_mean, stat(mean sd min max sk k)
+}
+
+		
+twoway line RMSFE_variables RMSFE_const_mean stata_date if year > 2014, xlabel(, angle(vertical))
+
+twoway line ln_return_eua yhat_variables yhat_const_mean stata_date if year < 2020 & year > 2018, xlabel(, angle(vertical))
+	
+
 	
 /*
 	forvalues i = 0(1)100 {
