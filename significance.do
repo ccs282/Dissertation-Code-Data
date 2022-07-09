@@ -1,35 +1,37 @@
-	
 
     ** Results matrices
         if test_specific_date != "yes" {
-            foreach x in Germany UK Spain Italy Czech_Republic Netherlands France Romania Bulgaria Greece Others {
-				if `x'_num != 0 {
-					local temp = `x'_num
-					forvalues i = 1(1)`temp' {
-                        matrix def `x'_phases = (CAR_pre_`x'_`i', CAR_event_`x'_`i', CAR_post_`x'_`i', CAR_ew_`x'_`i'\ SD_CAR_pre_`x'_`i', SD_CAR_event_`x'_`i', SD_CAR_post_`x'_`i', SD_CAR_ew_`x'_`i' \ p_pre_`x'_`i', p_event_`x'_`i', p_post_`x'_`i', p_ew_`x'_`i')
-                        matrix rown `x'_phases = CAR SD p-value
-                        matrix coln `x'_phases = CAR_pre CAR_event CAR_post CAR_window
-                        summ date if date == announce_date[`x'_row, `i'], meanonly
-                        matlist `x'_phases, lines(rct) title("`x'_`i': Pre/Post/Event/Event_Window (`r(mean)')")
 
-                        * Individual days within event window
-                            if show_days == 1 {
-                                local pre = event_length_pre
-                                local post = event_length_post
-                                matrix def `x'_days = J(3, event_length_post+event_length_pre+1, .)
+    		foreach x in bg cz dk fi de el hu it nl pl pt ro sk si es uk xx {
+				foreach y in main alt new rev follow leak canc parl nuc {
+					forvalues i = 1(1)10 {
+						capture confirm scalar `x'_`y'`i'_d
+						if _rc == 0 {
+	                        matrix def `x'_`y'`i'_phases = (CAR_pre_`x'_`y'`i', CAR_event_`x'_`y'`i', CAR_post_`x'_`y'`i', CAR_ew_`x'_`y'`i'\ SD_CAR_pre_`x'_`y'`i', SD_CAR_event_`x'_`y'`i', SD_CAR_post_`x'_`y'`i', SD_CAR_ew_`x'_`y'`i' \ p_pre_`x'_`y'`i', p_event_`x'_`y'`i', p_post_`x'_`y'`i', p_ew_`x'_`y'`i')
+                            matrix rown `x'_`y'`i'_phases = CAR SD p-value
+                            matrix coln `x'_`y'`i'_phases = CAR_pre CAR_event CAR_post CAR_window
+                            summ date if date == `x'_`y'`i'_d, meanonly
+                            matlist `x'_`y'`i'_phases, lines(rct) title("`x'_`y'`i': Pre/Post/Event/Event_Window (`r(mean)')")
 
-                                forvalues t = -`pre'(1)`post' {
-                                    local nom = `t' + event_length_pre + 1
-                                    matrix `x'_days[1, `nom'] = CAR_d`nom'_`x'_`i'
-                                    matrix `x'_days[2, `nom'] = SD_CAR_event_`x'_`i'
-                                    matrix `x'_days[3, `nom'] = p_d`nom'_`x'_`i'
+                            * Individual days within event window
+                                if show_days == 1 {
+                                    local pre = event_length_pre
+                                    local post = event_length_post
+                                    matrix def `x'_`y'`i'_days = J(3, event_length_post+event_length_pre+1, .)
+
+                                    forvalues t = -`pre'(1)`post' {
+                                        local nom = `t' + event_length_pre + 1
+                                        matrix `x'_`y'`i'_days[1, `nom'] = CAR_d`nom'_`x'_`y'`i'
+                                        matrix `x'_`y'`i'_days[2, `nom'] = SD_CAR_event_`x'_`y'`i'
+                                        matrix `x'_`y'`i'_days[3, `nom'] = p_d`nom'_`x'_`y'`i'
+                                    }
+
+                                    matrix rown `x'_`y'`i'_days = CAR SD p-value
+                                    summ date if date == `x'_`y'`i'_d, meanonly
+
+                                    matlist `x'_`y'`i'_days, lines(rowt) title("`x'_`y'`i': Individual Days (`r(mean)')")
                                 }
-
-                                matrix rown `x'_days = CAR SD p-value
-                                summ date if date == announce_date[`x'_row, `i'], meanonly
-
-                                matlist `x'_days, lines(rowt) title("`x'_`i': Individual Days (`r(mean)')")
-                            }
+						}
 					}
 				}
 			}

@@ -1,6 +1,4 @@
 
-// CHANGE TO MAKE COUNTRY_NAME COME FIRST
-
     ** Event time
 
 		if test_specific_date == "yes" {
@@ -10,16 +8,18 @@
 		}
 
 		else {
-			foreach x in Germany UK Spain Italy Czech_Republic Netherlands France Romania Bulgaria Greece Others {
-				if `x'_num != 0 {
-					local temp = `x'_num
-					forvalues i = 1(1)`temp' {
-						capture drop event_date_`x'_`i'
-						gen event_date_`x'_`i' = .
-						replace event_date_`x'_`i' = 1 if date == announce_date[`x'_row, `i']
+			foreach x in bg cz dk fi de el hu it nl pl pt ro sk si es uk xx {
+				foreach y in main alt new rev follow leak canc parl nuc {
+					forvalues i = 1(1)10 {
+						capture confirm scalar `x'_`y'`i'_d
+						if _rc == 0 {
+							capture drop event_date_`x'_`y'`i'
+							gen event_date_`x'_`y'`i' = .
+							replace event_date_`x'_`y'`i' = 1 if date == `x'_`y'`i'_d
+						}
 					}
 				}
-			}	
+			}
 		}
 
 	** Event window
@@ -32,17 +32,20 @@
 		}
 
 		else {
-			foreach x in Germany UK Spain Italy Czech_Republic Netherlands France Romania Bulgaria Greece Others {
-				if `x'_num != 0 {
-					local temp = `x'_num
-					forvalues i = 1(1)`temp' {
-						capture drop ew_`x'_`i'
-						gen ew_`x'_`i' = .
-						summ trading_date if event_date_`x'_`i' == 1
-						replace ew_`x'_`i' = 1 if (trading_date >= r(mean) - event_length_pre) & (trading_date <= r(mean) + event_length_post)
+
+			foreach x in bg cz dk fi de el hu it nl pl pt ro sk si es uk xx {
+				foreach y in main alt new rev follow leak canc parl nuc {
+					forvalues i = 1(1)10 {
+						capture confirm scalar `x'_`y'`i'_d
+						if _rc == 0 {
+							capture drop ew_`x'_`y'`i'
+							gen ew_`x'_`y'`i' = .
+							summ trading_date if event_date_`x'_`y'`i' == 1
+							replace ew_`x'_`y'`i' = 1 if (trading_date >= r(mean) - event_length_pre) & (trading_date <= r(mean) + event_length_post)
+						}
 					}
 				}
-			}	
+			}
 		}
 
 	** Estimation win
@@ -55,18 +58,19 @@
 		}
 
 		else {
-			foreach x in Germany UK Spain Italy Czech_Republic Netherlands France Romania Bulgaria Greece Others {
-				if `x'_num != 0 {
-					local temp = `x'_num
-					forvalues i = 1(1)`temp' {
-						capture drop est_win_`x'_`i'
-						gen est_win_`x'_`i' = .
-						summ trading_date if event_date_`x'_`i' == 1
-						replace est_win_`x'_`i' = 1 if (trading_date >= r(mean) - event_length_pre - est_length) & (trading_date < r(mean) - event_length_pre) & (date >= earliest_date)
+			foreach x in bg cz dk fi de el hu it nl pl pt ro sk si es uk xx {
+				foreach y in main alt new rev follow leak canc parl nuc {
+					forvalues i = 1(1)10 {
+						capture confirm scalar `x'_`y'`i'_d
+						if _rc == 0 {
+							capture drop est_win_`x'_`y'`i'
+							gen est_win_`x'_`y'`i' = .
+							summ trading_date if event_date_`x'_`y'`i' == 1
+							replace est_win_`x'_`y'`i' = 1 if (trading_date >= r(mean) - event_length_pre - est_length) & (trading_date < r(mean) - event_length_pre) & (date >= earliest_date)
+						}
 					}
 				}
-			}	
-
+			}
 		}
 
 	** Normal returns
@@ -115,53 +119,56 @@
 		}
 
 		else{
-			foreach x in Germany UK Spain Italy Czech_Republic Netherlands France Romania Bulgaria Greece Others {
-				if `x'_num != 0 {
-					local temp = `x'_num
-					forvalues i = 1(1)`temp' {
-						capture drop NR_`x'_`i'
 
-					* Constant Mean
-						if reg_type == 1 {
-							reg ln_return_eua est_win_`x'_`i' if est_win_`x'_`i' == 1, robust noconst
-							gen NR_`x'_`i' = e(b)[1, 1]
-							scalar df_`x'_`i' = e(df_r)
-						}
+			foreach x in bg cz dk fi de el hu it nl pl pt ro sk si es uk xx {
+				foreach y in main alt new rev follow leak canc parl nuc {
+					forvalues i = 1(1)10 {
+						capture confirm scalar `x'_`y'`i'_d
+						if _rc == 0 {
+							capture drop NR_`x'_`y'`i'
 
-					* Zero Mean
-						else if reg_type == 2 {
-							gen NR_`x'_`i' = 0
-							reg ln_return_eua est_win_`x'_`i' if est_win_`x'_`i' == 1, robust noconst
-							scalar df_`x'_`i' = e(df_r)
-						}
-
-					* Koch et al. (2016) variables model
-						else if reg_type == 3 {
-							// determine lag length using AIC/BIC!!!
-							reg ln_return_eua L.ln_return_eua $ln_return_explanatory if est_win_`x'_`i' == 1, robust
-							scalar df_`x'_`i' = e(df_r)
-
-							predict NR_`x'_`i' if est_win_`x'_`i' == 1
-
-							summ trading_date if event_date_`x'_`i' == 1
-							capture drop tempv = . 
-							gen tempv = ln_return_eua if trading_date < (r(mean) - event_length_pre) // create a temporary variable for the recursive estimation (bc. of the lagged dependent variable)
-
-							reg tempv L.tempv $ln_return_explanatory if est_win_`x'_`i' == 1, robust
-				
-							local ew_length = event_length_post + event_length_pre + 1
-							forvalues j = 1(1)`ew_length' {
-								summ trading_date if event_date_`x'_`i' == 1
-								predict NR_`x'_`i'_`j' if trading_date == (r(mean) - event_length_pre -1 + `j')
-								replace tempv = NR_`x'_`i'_`j' if trading_date == (r(mean) - event_length_pre -1 + `j')
-								replace NR_`x'_`i' = NR_`x'_`i'_`j' if trading_date == (r(mean) - event_length_pre -1 + `j')
+							* Constant Mean
+							if reg_type == 1 {
+								reg ln_return_eua est_win_`x'_`y'`i' if est_win_`x'_`y'`i' == 1, robust noconst
+								gen NR_`x'_`y'`i' = e(b)[1, 1]
+								scalar df_`x'_`y'`i' = e(df_r)
 							}
 
-							drop NR_`x'_`i'_* tempv
+							* Zero Mean
+							else if reg_type == 2 {
+								gen NR_`x'_`y'`i' = 0
+								reg ln_return_eua est_win_`x'_`y'`i' if est_win_`x'_`y'`i' == 1, robust noconst
+								scalar df_`x'_`y'`i' = e(df_r)
+							}
+
+							* Koch et al. (2016) variables model
+							else if reg_type == 3 {
+								// determine lag length using AIC/BIC!!!
+								reg ln_return_eua L.ln_return_eua $ln_return_explanatory if est_win_`x'_`y'`i' == 1, robust
+								scalar df_`x'_`y'`i' = e(df_r)
+
+								predict NR_`x'_`y'`i' if est_win_`x'_`y'`i' == 1
+
+								summ trading_date if event_date_`x'_`y'`i' == 1
+								capture drop tempv = . 
+								gen tempv = ln_return_eua if trading_date < (r(mean) - event_length_pre) // create a temporary variable for the recursive estimation (bc. of the lagged dependent variable)
+
+								reg tempv L.tempv $ln_return_explanatory if est_win_`x'_`y'`i' == 1, robust
+					
+								local ew_length = event_length_post + event_length_pre + 1
+								forvalues j = 1(1)`ew_length' {
+									summ trading_date if event_date_`x'_`y'`i' == 1
+									predict NR_`x'_`y'`i'_`j' if trading_date == (r(mean) - event_length_pre -1 + `j')
+									replace tempv = NR_`x'_`y'`i'_`j' if trading_date == (r(mean) - event_length_pre -1 + `j')
+									replace NR_`x'_`y'`i' = NR_`x'_`y'`i'_`j' if trading_date == (r(mean) - event_length_pre -1 + `j')
+								}
+
+								drop NR_`x'_`y'`i'_* tempv
+							}
 						}
 					}
 				}
-			}	
+			}
 		}
 
 	** Abnormal returns
@@ -172,26 +179,18 @@
 		}
 
 		else {
-			foreach x in Germany UK Spain Italy Czech_Republic Netherlands France Romania Bulgaria Greece Others {
-				if `x'_num != 0 {
-					local temp = `x'_num
-					forvalues i = 1(1)`temp' {
-						capture drop AR_`x'_`i'
-						gen AR_`x'_`i' = ln_return_eua - NR_`x'_`i'
+			foreach x in bg cz dk fi de el hu it nl pl pt ro sk si es uk xx {
+				foreach y in main alt new rev follow leak canc parl nuc {
+					forvalues i = 1(1)10 {
+						capture confirm scalar `x'_`y'`i'_d
+						if _rc == 0 {
+							capture drop AR_`x'_`y'`i'
+							gen AR_`x'_`y'`i' = ln_return_eua - NR_`x'_`y'`i'
+						}
 					}
 				}
-			}	
+			}
 		}
-
-		/*
-		if reg_type == 3 {
-			gen AR = eua - NR 
-			
-			capture drop AR_perc
-			gen AR_perc = AR/NR
-			order AR_perc, after(NR)
-		}
-		*/
 
 	** Cumulative abnormal returns
 
@@ -240,50 +239,105 @@
 		}
 
 		else {
-			foreach x in Germany UK Spain Italy Czech_Republic Netherlands France Romania Bulgaria Greece Others {
-				if `x'_num != 0 {
-					local temp = `x'_num
-					forvalues i = 1(1)`temp' {
-						* Event window
-							egen CARa = total(AR_`x'_`i') if ew_`x'_`i' == 1
-							summ CARa, meanonly
-							scalar CAR_ew_`x'_`i' = r(mean)
-	
-						* Pre-event
-							summ date if event_date_`x'_`i' == 1, meanonly
-							egen CARb = total(AR_`x'_`i') if ew_`x'_`i' == 1 & date < `r(mean)'
-							summ CARb, meanonly
-							scalar CAR_pre_`x'_`i' = r(mean)
 
-						* Post-event
-							summ date if event_date_`x'_`i' == 1, meanonly
-							egen CARc = total(AR_`x'_`i') if ew_`x'_`i' == 1 & date > `r(mean)'
-							summ CARc, meanonly
-							scalar CAR_post_`x'_`i' = r(mean)
+			foreach x in bg cz dk fi de el hu it nl pl pt ro sk si es uk xx {
+				foreach y in main alt new rev follow leak canc parl nuc {
+					forvalues i = 1(1)10 {
+						capture confirm scalar `x'_`y'`i'_d
+						if _rc == 0 {
+							* Event window
+								egen CARa = total(AR_`x'_`y'`i') if ew_`x'_`y'`i' == 1
+								summ CARa, meanonly
+								scalar CAR_ew_`x'_`y'`i' = r(mean)
+		
+							* Pre-event
+								summ date if event_date_`x'_`y'`i' == 1, meanonly
+								egen CARb = total(AR_`x'_`y'`i') if ew_`x'_`y'`i' == 1 & date < `r(mean)'
+								summ CARb, meanonly
+								scalar CAR_pre_`x'_`y'`i' = r(mean)
 
-						* Event Day
-							egen CARd = total(AR_`x'_`i') if event_date_`x'_`i' == 1
-							summ CARd, meanonly
-							scalar CAR_event_`x'_`i' = r(mean)
+							* Post-event
+								summ date if event_date_`x'_`y'`i' == 1, meanonly
+								egen CARc = total(AR_`x'_`y'`i') if ew_`x'_`y'`i' == 1 & date > `r(mean)'
+								summ CARc, meanonly
+								scalar CAR_post_`x'_`y'`i' = r(mean)
 
-						capture drop CAR*
-
-						* Every single day within the event window
-							tab date if ew_`x'_`i' == 1, matrow(mat_`x'_`i')
-
-							global pre = event_length_pre
-							global post = event_length_post
-
-							// let it run from 1 to ew_length instead? same outcome, easier though
-							forvalues t = -$pre(1)$post {
-								capture drop CAR*
-								local nom = `t' + event_length_pre + 1
-								egen CAR_temp = total(AR_`x'_`i') if date == mat_`x'_`i'[`nom', 1]
-								summ CAR_temp, meanonly
-								scalar CAR_d`nom'_`x'_`i' = `r(mean)'
-							}
+							* Event Day
+								egen CARd = total(AR_`x'_`y'`i') if event_date_`x'_`y'`i' == 1
+								summ CARd, meanonly
+								scalar CAR_event_`x'_`y'`i' = r(mean)
 
 							capture drop CAR*
+
+							* Every single day within the event window
+								tab date if ew_`x'_`y'`i' == 1, matrow(mat_`x'_`y'`i')
+
+								global pre = event_length_pre
+								global post = event_length_post
+
+								// let it run from 1 to ew_length instead? same outcome, easier though
+								forvalues t = -$pre(1)$post {
+									capture drop CAR*
+									local nom = `t' + event_length_pre + 1
+									egen CAR_temp = total(AR_`x'_`y'`i') if date == mat_`x'_`y'`i'[`nom', 1]
+									summ CAR_temp, meanonly
+									scalar CAR_d`nom'_`x'_`y'`i' = `r(mean)'
+								}
+
+								capture drop CAR*
+						}
+					}
+				}
+			}
+
+
+
+			foreach x in bg cz dk fi de el hu it nl pl pt ro sk si es uk xx {
+				foreach y in main alt new rev follow leak canc parl nuc {
+					forvalues i = 1(1)10 {
+						capture confirm scalar `x'_`y'`i'_d
+						if _rc == 0 {
+							* Event window
+								egen CARa = total(AR_`x'_`y'`i') if ew_`x'_`y'`i' == 1
+								summ CARa, meanonly
+								scalar CAR_ew_`x'_`y'`i' = r(mean)
+		
+							* Pre-event
+								summ date if event_date_`x'_`y'`i' == 1, meanonly
+								egen CARb = total(AR_`x'_`y'`i') if ew_`x'_`y'`i' == 1 & date < `r(mean)'
+								summ CARb, meanonly
+								scalar CAR_pre_`x'_`y'`i' = r(mean)
+
+							* Post-event
+								summ date if event_date_`x'_`y'`i' == 1, meanonly
+								egen CARc = total(AR_`x'_`y'`i') if ew_`x'_`y'`i' == 1 & date > `r(mean)'
+								summ CARc, meanonly
+								scalar CAR_post_`x'_`y'`i' = r(mean)
+
+							* Event Day
+								egen CARd = total(AR_`x'_`y'`i') if event_date_`x'_`y'`i' == 1
+								summ CARd, meanonly
+								scalar CAR_event_`x'_`y'`i' = r(mean)
+
+							capture drop CAR*
+
+							* Every single day within the event window
+								tab date if ew_`x'_`y'`i' == 1, matrow(mat_`x'_`y'`i')
+
+								global pre = event_length_pre
+								global post = event_length_post
+
+								// let it run from 1 to ew_length instead? same outcome, easier though
+								forvalues t = -$pre(1)$post {
+									capture drop CAR*
+									local nom = `t' + event_length_pre + 1
+									egen CAR_temp = total(AR_`x'_`y'`i') if date == mat_`x'_`y'`i'[`nom', 1]
+									summ CAR_temp, meanonly
+									scalar CAR_d`nom'_`x'_`y'`i' = `r(mean)'
+								}
+
+								capture drop CAR*
+						}
 					}
 				}
 			}
@@ -293,63 +347,88 @@
 	** Average CAR across dates and countries
 
 		if test_specific_date != "yes" {
-			scalar No = Germany_num + UK_num + Spain_num + Italy_num + Czech_Republic_num + Netherlands_num + France_num + Romania_num + Bulgaria_num + Greece_num + Others_num
+
+			scalar No = 0
+			
+			foreach x in bg cz dk fi de el hu it nl pl pt ro sk si es uk xx {
+				foreach y in main alt new rev follow leak canc parl nuc {
+					forvalues i = 1(1)10 {
+						capture confirm scalar `x'_`y'`i'_s
+						if _rc == 0 {
+							if `x'_`y'`i'_s == 1 {
+								scalar No = No + `x'_`y'`i'_s
+							}
+						}
+					}
+				}
+			}
 
             * Pre-event
-                foreach x in Germany UK Spain Italy Czech_Republic Netherlands France Romania Bulgaria Greece Others {
-                    if `x'_num != 0 {
-                    	local temp = `x'_num
-                        forvalues i = 1(1)`temp' {
-                            capture drop v_CAR_pre_`x'_`i'
-                            gen v_CAR_pre_`x'_`i' = CAR_pre_`x'_`i'
-                        }
-                    }
-			    }
+				foreach x in bg cz dk fi de el hu it nl pl pt ro sk si es uk xx {
+					foreach y in main alt new rev follow leak canc parl nuc {
+						forvalues i = 1(1)10 {
+							capture confirm scalar `x'_`y'`i'_d
+							if _rc == 0 {
+								capture drop v_CAR_pre_`x'_`y'`i'
+                            	gen v_CAR_pre_`x'_`y'`i' = CAR_pre_`x'_`y'`i'
+							}
+						}
+					}
+				}
 
                 egen v_CAR_pre_avg = rowmean(v_CAR*)
                 scalar CAR_pre_avg = v_CAR_pre_avg[1]
                 capture drop v_*
                     
 			* Post-event
-                foreach x in Germany UK Spain Italy Czech_Republic Netherlands France Romania Bulgaria Greece Others {
-                    if `x'_num != 0 {
-                         local temp = `x'_num
-                        forvalues i = 1(1)`temp' {
-                            capture drop v_CAR_post_`x'_`i'
-                            gen v_CAR_post_`x'_`i' = CAR_post_`x'_`i'
-                        }
-                    }
-			    }
+
+				foreach x in bg cz dk fi de el hu it nl pl pt ro sk si es uk xx {
+					foreach y in main alt new rev follow leak canc parl nuc {
+						forvalues i = 1(1)10 {
+							capture confirm scalar `x'_`y'`i'_d
+							if _rc == 0 {
+								capture drop v_CAR_post_`x'_`y'`i'
+								gen v_CAR_post_`x'_`y'`i' = CAR_post_`x'_`y'`i'
+							}
+						}
+					}
+				}
 
                 egen v_CAR_post_avg = rowmean(v_CAR*)
                 scalar CAR_post_avg = v_CAR_post_avg[1]
                 capture drop v_*
                     
 			* Event Day
-				foreach x in Germany UK Spain Italy Czech_Republic Netherlands France Romania Bulgaria Greece Others {
-                    if `x'_num != 0 {
-                        local temp = `x'_num
-                        forvalues i = 1(1)`temp' {
-                            capture drop v_CAR_event_`x'_`i'
-                            gen v_CAR_event_`x'_`i' = CAR_event_`x'_`i'
-                        }
-                    }
-			    }
+
+				foreach x in bg cz dk fi de el hu it nl pl pt ro sk si es uk xx {
+					foreach y in main alt new rev follow leak canc parl nuc {
+						forvalues i = 1(1)10 {
+							capture confirm scalar `x'_`y'`i'_d
+							if _rc == 0 {
+								capture drop v_CAR_event_`x'_`y'`i'
+                            	gen v_CAR_event_`x'_`y'`i' = CAR_event_`x'_`y'`i'
+							}
+						}
+					}
+				}
 
                 egen v_CAR_event_avg = rowmean(v_CAR*)
                 scalar CAR_event_avg = v_CAR_event_avg[1]
                 capture drop v_*
 
             * Event window
-				foreach x in Germany UK Spain Italy Czech_Republic Netherlands France Romania Bulgaria Greece Others {
-                    if `x'_num != 0 {
-                        local temp = `x'_num
-                        forvalues i = 1(1)`temp' {
-                            capture drop v_CAR_ew_`x'_`i'
-                            gen v_CAR_ew_`x'_`i' = CAR_ew_`x'_`i'
-                        }
-                    }
-			    }
+
+				foreach x in bg cz dk fi de el hu it nl pl pt ro sk si es uk xx {
+					foreach y in main alt new rev follow leak canc parl nuc {
+						forvalues i = 1(1)10 {
+							capture confirm scalar `x'_`y'`i'_d
+							if _rc == 0 {
+								capture drop v_CAR_ew_`x'_`y'`i'
+								gen v_CAR_ew_`x'_`y'`i' = CAR_ew_`x'_`y'`i'
+							}
+						}
+					}
+				}
 
                 egen v_CAR_ew_avg = rowmean(v_CAR*)
                 scalar CAR_ew_avg = v_CAR_ew_avg[1]
@@ -357,18 +436,20 @@
 
 			* Every single day within the event window
 
-				foreach x in Germany UK Spain Italy Czech_Republic Netherlands France Romania Bulgaria Greece Others {
-                    if `x'_num != 0 {
-                        local temp = `x'_num
-                        forvalues i = 1(1)`temp' {
-							forvalues t = -$pre(1)$post {
-								local nom = `t' + event_length_pre + 1
-								capture drop v_CAR_d`nom'_`x'_`i'
-                            	gen v_CAR_d`nom'_`x'_`i' = CAR_d`nom'_`x'_`i'
+				foreach x in bg cz dk fi de el hu it nl pl pt ro sk si es uk xx {
+					foreach y in main alt new rev follow leak canc parl nuc {
+						forvalues i = 1(1)10 {
+							capture confirm scalar `x'_`y'`i'_d
+							if _rc == 0 {
+								forvalues t = -$pre(1)$post {
+									local nom = `t' + event_length_pre + 1
+									capture drop v_CAR_d`nom'_`x'_`y'`i'
+									gen v_CAR_d`nom'_`x'_`y'`i' = CAR_d`nom'_`x'_`y'`i'
+								}
 							}
-                        }
-                    }
-			    }
+						}
+					}
+				}
 
 				forvalues t = -$pre(1)$post {
 					local nom = `t' + event_length_pre + 1
