@@ -73,6 +73,41 @@
 			}
 		}
 
+	** Deviation from Event Day
+
+		if test_specific_date == "yes" {
+			capture drop deviation
+			gen deviation = .
+			summ trading_date if event_date == 1, meanonly
+			local pr = -(est_length + event_length_pre)
+			local ps = event_length_post
+			forvalues k = `pr'(1)`ps' {
+				replace deviation = `k' if trading_date == r(mean) + `k' 
+			}
+		}
+
+		else {
+			foreach x in bg cz dk fi de el hu it nl pl pt ro sk si es uk xx {
+				foreach y in main alt new rev follow leak canc parl nuc {
+					forvalues i = 1(1)10 {
+						capture confirm scalar `x'_`y'`i'_d
+						if _rc == 0 {
+							capture drop deviation_`x'_`y'`i'
+							gen deviation_`x'_`y'`i' = .
+							summ trading_date if event_date_`x'_`y'`i' == 1, meanonly
+							local pr = -(est_length + event_length_pre)
+							local ps = event_length_post
+							forvalues k = `pr'(1)`ps' {
+								replace deviation_`x'_`y'`i' = `k' if trading_date == r(mean) + `k' 
+							}
+						}
+					}
+				}
+			}
+		}
+
+
+
 	** Normal returns
 		if test_specific_date == "yes" {
 			capture drop NR
