@@ -77,11 +77,13 @@
 /*	
 foreach var of varlist eua oil coal gas elec gsci vix stoxx diff_baa_aaa ecb_spot_3m{
 	dfuller `var'
+	kpss `var'
 }
 
 
 foreach var of varlist ln_return_eua ln_return_oil ln_return_coal ln_return_gas ln_return_elec ln_return_gsci ln_return_vix ln_return_stoxx ln_return_diff_baa_aaa ln_return_ecb_spot_3m {
 	dfuller `var' 
+	kpss `var'
 }
 
 
