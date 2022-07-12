@@ -120,9 +120,32 @@ forvalues i=1(1)5 {
 	
 	scalar est_length = 255
 	scalar no_windows = 47900
+	scalar no_windows = 479000 // max lies at approx 479 currently
 	quietly do forecast_errors
 
 	
+/*
+	capture drop length
+	capture drop vrb
+	capture drop cm
+	gen vrb = .
+	gen length = .
+	gen cm = .
+	forvalues a = 15(10)3500 {
+		scalar est_length = `a'
+		quietly do forecast_errors
+		replace length = `a' if _n == `a'
+		summ RMSFE_variables, meanonly
+		replace vrb = r(mean) if _n == `a'
+		summ RMSFE_const_mean, meanonly
+		replace cm = r(mean) if _n == `a'
+		di "`a'"
+	}
+
+twoway line vrb cm length if length < 500
+*/
+
+
 	foreach y in MSFE RMSFE MAFE {
 		tabstat `y'_variables `y'_const_mean `y'_zero_mean, stat(mean sd min max sk k)
 	}
