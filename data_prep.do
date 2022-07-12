@@ -1,7 +1,7 @@
 
 ** explanatory variables 
 	
-	global explanatory oil coal gas elec gsci vix stoxx diff_baa_aaa ecb_spot_3m
+	global explanatory oil coal gas elec gsci vix stoxx diff_baa_aaa ecb_spot_3m /*cer*/
 
 /*
 	foreach var of global explanatory {
@@ -32,7 +32,7 @@
 
 
 
-	global ln_return_explanatory ln_return_oil ln_return_coal ln_return_gas ln_return_elec ln_return_gsci ln_return_vix ln_return_stoxx ln_return_diff_baa_aaa ln_return_ecb_spot_3m
+	global ln_return_explanatory ln_return_oil ln_return_coal ln_return_gas ln_return_elec ln_return_gsci ln_return_vix ln_return_stoxx ln_return_diff_baa_aaa ln_return_ecb_spot_3m /*ln_return_cer*/
 
 /*
 	L.ln_return_oil L.ln_return_coal L.ln_return_gas L.ln_return_elec L.ln_return_gsci L.ln_return_vix L.ln_return_stoxx L.ln_return_diff_baa_aaa L.ln_return_cer L.ln_return_ecb_spot_3m
