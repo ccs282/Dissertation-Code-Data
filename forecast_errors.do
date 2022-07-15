@@ -35,7 +35,7 @@
             summ trading_date if event_date_fe == 1
             replace est_win_fe = 1 if (trading_date >= r(mean) - event_length_pre - est_length) & (trading_date < r(mean) - event_length_pre) & (date >= 20080401)
             
-            foreach x in variables const_mean zero_mean{
+            foreach x in variables const_mean const_mean_trim zero_mean levels{
                 
                 ** generate predictions
                 if  "`x'" == "variables" {
@@ -59,10 +59,33 @@
                     gen NR_`x' = e(b)[1, 1]
                 }
 
+                else if "`x'" == "const_mean_trim" {
+                    reg ln_return_eua est_win_fe if est_win_fe == 1, robust noconst
+                    trimmean ln_return_eua if est_win_fe == 1, percent(20)
+                    gen NR_`x' = r(tmean20)
+                }
+
                 else if "`x'" == "zero_mean" {
                     gen NR_`x' = 0
 
                 }
+
+                else if "`x'" == "levels" {
+                    capture drop tempv 
+                    summ trading_date if event_date_fe == 1
+                    gen tempv = eua if trading_date < (r(mean) - event_length_pre) 
+                    reg tempv L.tempv $explanatory if est_win_fe == 1, robust
+
+                    local ew_length = event_length_post + event_length_pre + 1
+                    forvalues i = 1(1)`ew_length' {
+                        summ trading_date if event_date_fe == 1
+                        predict NR_`i' if trading_date == (r(mean) - event_length_pre -1 + `i')
+                        replace tempv = NR_`i' if trading_date == (r(mean) - event_length_pre -1 + `i')
+                        capture gen NR_`x'= .
+                        replace NR_`x' = NR_`i' if trading_date == (r(mean) - event_length_pre -1 + `i')
+                    }
+                }
+
 
                 ** yhat, MSFE, RMSFE, MAFE
 
@@ -71,8 +94,14 @@
                     
                 capture drop NR_*
 
-                capture drop fe_`x' 
-                gen fe_`x' = yhat_`x' - ln_return_eua if ew_fe == 1
+                if "`x'" != "levels" {
+                    capture drop fe_`x' 
+                    gen fe_`x' = yhat_`x' - ln_return_eua if ew_fe == 1
+                }
+                else {
+                    gen fe_`x' = yhat_`x' - eua if ew_fe == 1
+
+                }
 
                 capture drop fe_abs_`x'
                 gen fe_abs_`x' = abs(fe_`x')
