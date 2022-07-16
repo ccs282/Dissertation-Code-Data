@@ -110,8 +110,6 @@ forvalues i=1(1)5 {
 	scalar price = "yes"
 	scalar volume = "no"
 	quietly do forecast_errors
-
-	
 /*
 	capture drop length
 	capture drop vrb
@@ -135,13 +133,27 @@ twoway line vrb cm length if length < 500
 
 
 	foreach y in MSFE RMSFE MAFE {
-		tabstat `y'_variables `y'_const_mean `y'_zero_mean, stat(mean sd min max sk k)
+		tabstat `y'_variables `y'_const_mean `y'_const_mean_trim `y'_zero_mean `y'_levels if year > 2015 & year <= 2022, stat(mean sd min max sk k)
 	}
 	
-	twoway line RMSFE_variables RMSFE_const_mean stata_date if year > 2014, xlabel(, angle(vertical))
+	foreach y in MSFE RMSFE MAFE {
+		foreach x in variables const_mean const_mean_trim zero_mean {
+			di "-------------start-------------"
+			di "`y'_`x'"
+			trimmean `y'_`x' if year > 2007 & year <= 2014, percent(5)
+			di "-------------end--------------"
+		}
+	}	
 
-	twoway line ln_return_eua yhat_variables yhat_const_mean stata_date if year < 2020 & year > 2018, xlabel(, angle(vertical))
 	
+	/*
+	twoway line RMSFE_variables RMSFE_const_mean RMSFE_zero_mean stata_date if year > 2008 & year < 2012, xlabel(, angle(vertical))
+	
+		twoway line RMSFE_levels stata_date if year > 2008 & year < 2023, xlabel(, angle(vertical))
+
+
+	twoway line ln_return_eua yhat_variables yhat_const_mean stata_date if year > 2012 & year < 2014, xlabel(, angle(vertical))
+	*/
 
 	
 /*
