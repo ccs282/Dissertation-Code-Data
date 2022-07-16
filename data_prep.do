@@ -28,10 +28,6 @@
 		erase "`var'.dta"
 	}
 
-
-
-
-
 	global ln_return_explanatory ln_return_oil ln_return_coal ln_return_gas ln_return_elec ln_return_gsci ln_return_vix ln_return_stoxx ln_return_diff_baa_aaa ln_return_ecb_spot_3m /*ln_return_cer*/
 
 /*
@@ -41,7 +37,32 @@
 	capture drop aaa baa
 	
 ** explained/dependent variable
+
+	capture drop eua
+	capture drop eua_vol
+	gen eua_vol = .
+	gen eua = .
 	
+	forvalues i = 7(1)22 {
+		if `i' < 10 {
+			replace eua = eua0`i' if eua == . & eua0`i' != .
+		}
+		else {
+			replace eua = eua`i' if eua == . & eua`i' != .
+		}
+	}
+
+	forvalues i = 7(1)22 {
+		if `i' < 10 {
+			replace eua_vol = eua0`i'_vol if eua_vol == . & eua0`i'_vol != .
+		}
+		else {
+			replace eua_vol = eua`i'_vol if eua_vol == . & eua`i'_vol != .
+		}
+	}
+
+	save data, replace
+
 	drop if eua == .
 	capture drop ln_return_eua
 	gen ln_return_eua = ln(eua[_n] / eua[_n - 1]) if _n > 1
@@ -56,7 +77,32 @@
 	save data, replace
 	erase "eua.dta"
 
+	drop if eua_vol == .
+	capture drop ln_return_eua_vol
+	gen ln_return_eua_vol = ln(eua_vol[_n] / eua_vol[_n - 1]) if _n > 1
+	save eua_vol, replace
+	use eua_vol, clear
+	keep ln_return_eua_vol date
+	save, replace
+	use data, clear
+	// why not use date as matching variable?
+	mmerge date using eua_vol
+	drop _merge
+	save data, replace
+	erase "eua_vol.dta"
 
+	
+	forvalues i = 7(1)22 {
+		if `i' < 10 {
+			capture drop eua0`i'*
+		}
+		else {
+			capture drop eua`i'*
+		}
+	}
+
+	
+	
 	order ln_return_eua, after(eua)
 	
 	* Create lagged dependent variable
@@ -80,7 +126,7 @@
 
 	* drop all observations that have a missing value for one of the explanatory variables or the dependent variable
 		if treat_missing == 1 {
-			drop if ln_return_oil == .| ln_return_coal == .| ln_return_gas == .| ln_return_elec == .| ln_return_gsci == .| ln_return_vix == .| ln_return_stoxx == .| ln_return_diff_baa_aaa == .| ln_return_ecb_spot_3m == .| ln_return_eua == .
+			drop if ln_return_oil == .| ln_return_coal == .| ln_return_gas == .| ln_return_elec == .| ln_return_gsci == .| ln_return_vix == .| ln_return_stoxx == .| ln_return_diff_baa_aaa == .| ln_return_ecb_spot_3m == .| ln_return_eua == . | ln_return_eua_vol == .
 		} 
 
 		else if treat_missing == 2 {
