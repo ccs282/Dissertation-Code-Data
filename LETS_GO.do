@@ -197,6 +197,15 @@ di year_obs[1]
  estat ic
 
  	
+	capture confirm variable cool
+	di _rc
+	if !_rc {
+		di "yes"
+	}
+	else {
+		di "no"
+	}
+	
 */
 
 /*
