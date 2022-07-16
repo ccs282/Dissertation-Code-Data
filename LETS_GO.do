@@ -224,3 +224,8 @@ forvalues i = 10(1)21 {
 }
 
 keep dates dominant* moz*
+
+mean ln_return_eua
+trimmean ln_return_eua if year > 2015, percent(5)
+
+*/
