@@ -191,6 +191,12 @@ forvalues i=2009(1)2021{
 capture drop year_obs
 egen year_obs = rowmean(xx*)
 di year_obs[1]
+
+ reg ln_return_eua L.ln_return_eua L2.ln_return_eua L3.ln_return_eua $ln_return_explanatory if est_win == 1, robust
+ 
+ estat ic
+
+ 	
 */
 
 /*
