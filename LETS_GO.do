@@ -35,7 +35,6 @@
 		* Phase out announcements
 			quietly do phase_out
 
-			matrix list announce_date
 				
 		* Event Study Settings
 			scalar event_length_pre = 5 // length of event window pre event (days)
@@ -47,6 +46,9 @@
 			scalar reg_type = 1 // 1: constant mean return 2: zero mean return 3: model with many explanatory variables 
 			
 			scalar show_days = 1 // 1: show not only pre / post estimations but also every single day
+			
+			scalar price = "yes"
+			scalar volume = "no"
 
 
 	quietly do event_study
@@ -105,6 +107,8 @@ forvalues i=1(1)5 {
 	
 	scalar est_length = 255
 	scalar no_windows = 479000 // max lies at approx 479 currently
+	scalar price = "yes"
+	scalar volume = "no"
 	quietly do forecast_errors
 
 	
@@ -177,3 +181,19 @@ egen year_obs = rowmean(xx*)
 di year_obs[1]
 */
 
+/*
+import delimited "Trading_volume_test.csv", clear
+
+forvalues i = 10(1)21 {
+	capture drop dominant_`i'
+	gen dominant_`i' = .
+	local temp = `i'+1
+	replace dominant_`i' = 1 if moz`i'comdty > moz`temp'comdty
+	replace dominant_`i' = 0 if moz`i'comdty < moz`temp'comdty
+	order dominant_`i', after(moz`i'comdty)
+	capture drop date_`i'
+	gen date_`i' = dates
+	order date_`i', after(dominant_`i')
+}
+
+keep dates dominant* moz*
