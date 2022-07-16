@@ -107,7 +107,7 @@
 		}
 
 
-
+if price == "yes" {
 	** Normal returns
 		if test_specific_date == "yes" {
 			capture drop NR
@@ -226,6 +226,129 @@
 				}
 			}
 		}
+}
+
+if volume == "yes" {
+		** Normal returns
+		if test_specific_date == "yes" {
+			capture drop NR
+
+		* Constant mean
+			if reg_type == 1 {
+				reg ln_return_eua_vol est_win if est_win == 1, robust noconst
+				gen NR = e(b)[1, 1]
+				scalar df = e(df_r)
+			}
+
+		* Zero mean
+			else if reg_type == 2 {
+				gen NR = 0
+				reg ln_return_eua_vol est_win if est_win == 1, robust noconst
+				scalar df = e(df_r)
+			}
+
+		* Koch et al. (2016) variables model
+			else if reg_type == 3 {
+				reg ln_return_eua_vol L.ln_return_eua_vol $ln_return_explanatory if est_win == 1, robust
+				scalar df = e(df_r)
+
+				predict NR if est_win == 1
+
+				summ trading_date if event_date == 1
+				capture drop tempv 
+				gen tempv = ln_return_eua_vol if trading_date < (r(mean) - event_length_pre) // create a temporary variable for the recursive estimation (bc. of the lagged dependent variable)
+
+				reg tempv L.tempv $ln_return_explanatory if est_win == 1, robust
+	
+				local ew_length = event_length_post + event_length_pre + 1
+				forvalues i = 1(1)`ew_length' {
+					summ trading_date if event_date == 1
+					predict NR_`i' if trading_date == (r(mean) - event_length_pre -1 + `i')
+					replace tempv = NR_`i' if trading_date == (r(mean) - event_length_pre -1 + `i')
+					replace NR = NR_`i' if trading_date == (r(mean) - event_length_pre -1 + `i')
+				}
+
+				drop NR_* tempv
+			}
+
+			order NR, after(ln_return_eua_vol) 
+		}
+
+		else{
+
+			foreach x in bg cz dk fi de el hu it nl pl pt ro sk si es uk xx {
+				foreach y in main alt new rev follow leak canc parl nuc {
+					forvalues i = 1(1)10 {
+						capture confirm scalar `x'_`y'`i'_d
+						if _rc == 0 {
+							capture drop NR_`x'_`y'`i'
+
+							* Constant Mean
+							if reg_type == 1 {
+								reg ln_return_eua_vol est_win_`x'_`y'`i' if est_win_`x'_`y'`i' == 1, robust noconst
+								gen NR_`x'_`y'`i' = e(b)[1, 1]
+								scalar df_`x'_`y'`i' = e(df_r)
+							}
+
+							* Zero Mean
+							else if reg_type == 2 {
+								gen NR_`x'_`y'`i' = 0
+								reg ln_return_eua_vol est_win_`x'_`y'`i' if est_win_`x'_`y'`i' == 1, robust noconst
+								scalar df_`x'_`y'`i' = e(df_r)
+							}
+
+							* Koch et al. (2016) variables model
+							else if reg_type == 3 {
+								// determine lag length using AIC/BIC!!!
+								reg ln_return_eua_vol L.ln_return_eua_vol $ln_return_explanatory if est_win_`x'_`y'`i' == 1, robust
+								scalar df_`x'_`y'`i' = e(df_r)
+
+								predict NR_`x'_`y'`i' if est_win_`x'_`y'`i' == 1
+
+								summ trading_date if event_date_`x'_`y'`i' == 1
+								capture drop tempv = . 
+								gen tempv = ln_return_eua_vol if trading_date < (r(mean) - event_length_pre) // create a temporary variable for the recursive estimation (bc. of the lagged dependent variable)
+
+								reg tempv L.tempv $ln_return_explanatory if est_win_`x'_`y'`i' == 1, robust
+					
+								local ew_length = event_length_post + event_length_pre + 1
+								forvalues j = 1(1)`ew_length' {
+									summ trading_date if event_date_`x'_`y'`i' == 1
+									predict NR_`x'_`y'`i'_`j' if trading_date == (r(mean) - event_length_pre -1 + `j')
+									replace tempv = NR_`x'_`y'`i'_`j' if trading_date == (r(mean) - event_length_pre -1 + `j')
+									replace NR_`x'_`y'`i' = NR_`x'_`y'`i'_`j' if trading_date == (r(mean) - event_length_pre -1 + `j')
+								}
+
+								drop NR_`x'_`y'`i'_* tempv
+							}
+						}
+					}
+				}
+			}
+		}
+
+	** Abnormal returns
+		if test_specific_date == "yes" {
+			capture drop AR
+			gen AR = ln_return_eua_vol - NR
+			order AR, after(NR)
+		}
+
+		else {
+			foreach x in bg cz dk fi de el hu it nl pl pt ro sk si es uk xx {
+				foreach y in main alt new rev follow leak canc parl nuc {
+					forvalues i = 1(1)10 {
+						capture confirm scalar `x'_`y'`i'_d
+						if _rc == 0 {
+							capture drop AR_`x'_`y'`i'
+							gen AR_`x'_`y'`i' = ln_return_eua_vol - NR_`x'_`y'`i'
+						}
+					}
+				}
+			}
+		}
+}
+
 
 	** Cumulative abnormal returns
 

@@ -1,4 +1,4 @@
-	
+	if price == "yes" {
     ** Variance & SD AR (estimation win)
 		if test_specific_date == "yes" {
         	summ ln_return_eua if est_win == 1
@@ -41,6 +41,55 @@
 				}
 			}
         }
+
+    }
+
+    if volume == "yes" {
+            ** Variance & SD AR (estimation win)
+		if test_specific_date == "yes" {
+        	summ ln_return_eua_vol if est_win == 1
+            capture drop AR_squared
+            capture drop TSS
+            gen AR_squared = .
+            replace AR_squared = AR^2 if est_win == 1
+            egen TSS = total(AR_squared) if est_win == 1
+            summ TSS
+            scalar TSS_aux = r(mean)
+            summ trading_date if est_win == 1
+            // - 2 is only if two parameters need to be estimated?!
+            // formula wrong?! what is subtracted (number of variables used in calculation) and r(max)-r(min) doesnt consider missing values
+            scalar var_AR = (1/(r(max)-r(min)-2))*TSS_aux
+            scalar SD_AR = sqrt(var_AR)
+            capture drop AR_squared TSS 
+		}
+
+		else {
+			foreach x in bg cz dk fi de el hu it nl pl pt ro sk si es uk xx {
+				foreach y in main alt new rev follow leak canc parl nuc {
+					forvalues i = 1(1)10 {
+						capture confirm scalar `x'_`y'`i'_d
+						if _rc == 0 {
+	                    	summ ln_return_eua_vol if est_win_`x'_`y'`i' == 1
+                            capture drop AR_squared
+                            capture drop TSS
+                            gen AR_squared = .
+                            replace AR_squared = AR_`x'_`y'`i'^2 if est_win_`x'_`y'`i' == 1
+                            egen TSS = total(AR_squared) if est_win_`x'_`y'`i' == 1
+                            summ TSS
+                            scalar TSS_aux = r(mean)
+                            summ trading_date if est_win_`x'_`y'`i' == 1
+                            scalar var_AR_`x'_`y'`i' = (1/(r(max)-r(min)-2))*TSS_aux
+                            scalar SD_AR_`x'_`y'`i' = sqrt(var_AR_`x'_`y'`i')
+                            capture drop AR_squared TSS
+                            scalar drop TSS_aux 
+						}
+					}
+				}
+			}
+        }
+
+
+    }
 
 	** Variance & SD CAR (event window)
 		if test_specific_date == "yes" {
