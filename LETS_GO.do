@@ -27,46 +27,29 @@
 
 	** Define scalars/matrices
 
+		* Test one specific date only (independent of country exit dates)
+			scalar test_specific_date = "no" // "yes" when determining one specific date only; must be unequal "yes" when analysing countries' coal phase-outs
+
+			scalar date_specific = 20210930 // determine date to be tested if test_specific_date == "yes"
+
 		* Phase out announcements
 			quietly do phase_out
 
 			matrix list announce_date
-			
-		* Which dates to analyse?
-			
-			* Test one specific date only (independent of country exit dates)
-				scalar test_specific_date = "yes" // "yes" when determining one specific date only; must be unequal "yes" when analysing countries' coal phase-outs
-
-
-			* Test coal phase-out dates from matrix 
-				scalar Germany_num = 		1 // 0-4
-				scalar UK_num = 			1 // 0-3
-				scalar Spain_num = 			1 // 0-4
-				scalar Italy_num = 			1 // 0-2
-				scalar Czech_Republic_num = 1 // 0-2
-				scalar Netherlands_num = 	1 // 0-3
-				scalar France_num = 		1 // 0-3
-				scalar Romania_num = 		1 // 0-3
-				scalar Bulgaria_num = 		1 // 0-1
-				scalar Greece_num = 		1 // 0-3
-				scalar Others_num = 		0 // 0-?
-				
-				scalar date_specific = 20190128 // determine date to be tested if test_specific_date == "yes"
-
 				
 		* Event Study Settings
-			scalar event_length_pre = 3 // length of event window pre event (days)
-			scalar event_length_post = 3 // length of event window post event (days)
+			scalar event_length_pre = 5 // length of event window pre event (days)
+			scalar event_length_post = 5 // length of event window post event (days)
 
 			scalar est_length = 255 // length of estimation window (days)
 			scalar earliest_date = 20080314 // earliest date for estimation window
 						
-			scalar reg_type = 3 // 1: constant mean return 2: zero mean return 3: model with many explanatory variables 
+			scalar reg_type = 1 // 1: constant mean return 2: zero mean return 3: model with many explanatory variables 
 			
 			scalar show_days = 1 // 1: show not only pre / post estimations but also every single day
 
 
-	  quietly do event_study
+	quietly do event_study
 
 *** Postestimation: Test significance
 	quietly do post_estimation
@@ -121,7 +104,6 @@ forvalues i=1(1)5 {
 *** MSFE, RMSFE, MAFE
 	
 	scalar est_length = 255
-	scalar no_windows = 47900
 	scalar no_windows = 479000 // max lies at approx 479 currently
 	quietly do forecast_errors
 
