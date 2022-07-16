@@ -63,6 +63,8 @@
 
 	save data, replace
 
+	order eua, after(date)
+
 	drop if eua == .
 	capture drop ln_return_eua
 	gen ln_return_eua = ln(eua[_n] / eua[_n - 1]) if _n > 1

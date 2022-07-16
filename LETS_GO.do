@@ -37,18 +37,18 @@
 
 				
 		* Event Study Settings
-			scalar event_length_pre = 5 // length of event window pre event (days)
-			scalar event_length_post = 5 // length of event window post event (days)
+			scalar event_length_pre = 3 // length of event window pre event (days)
+			scalar event_length_post = 3 // length of event window post event (days)
 
 			scalar est_length = 255 // length of estimation window (days)
 			scalar earliest_date = 20080314 // earliest date for estimation window
 						
-			scalar reg_type = 1 // 1: constant mean return 2: zero mean return 3: model with many explanatory variables 
+			scalar reg_type = 3 // 1: constant mean return 2: zero mean return 3: model with many explanatory variables 
 			
 			scalar show_days = 1 // 1: show not only pre / post estimations but also every single day
 			
 			scalar price = "yes"
-			scalar volume = "no"
+			scalar volume = "n"
 
 
 	quietly do event_study
@@ -56,7 +56,6 @@
 *** Postestimation: Test significance
 	quietly do post_estimation
 	do significance
-	//scalar list
 
 	
 /*	
