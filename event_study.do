@@ -117,19 +117,24 @@ if price == "yes" {
 				reg ln_return_eua est_win if est_win == 1, robust noconst
 				gen NR = e(b)[1, 1]
 				scalar df = e(df_r)
+				scalar num_par = e(N) - e(df_r)
 			}
 
 		* Zero mean
 			else if reg_type == 2 {
 				gen NR = 0
 				reg ln_return_eua est_win if est_win == 1, robust noconst
-				scalar df = e(df_r)
+				scalar df = e(N)
+				scalar num_par = 0
+
 			}
 
 		* Koch et al. (2016) variables model
 			else if reg_type == 3 {
 				reg ln_return_eua L.ln_return_eua $ln_return_explanatory if est_win == 1, robust
 				scalar df = e(df_r)
+				scalar num_par = e(N) - e(df_r)
+
 
 				predict NR if est_win == 1
 
@@ -167,13 +172,17 @@ if price == "yes" {
 								reg ln_return_eua est_win_`x'_`y'`i' if est_win_`x'_`y'`i' == 1, robust noconst
 								gen NR_`x'_`y'`i' = e(b)[1, 1]
 								scalar df_`x'_`y'`i' = e(df_r)
+								scalar num_par_`x'_`y'`i' = e(N) - e(df_r)
+
 							}
 
 							* Zero Mean
 							else if reg_type == 2 {
 								gen NR_`x'_`y'`i' = 0
 								reg ln_return_eua est_win_`x'_`y'`i' if est_win_`x'_`y'`i' == 1, robust noconst
-								scalar df_`x'_`y'`i' = e(df_r)
+								scalar df_`x'_`y'`i' = e(N)
+								scalar num_par_`x'_`y'`i' = 0
+
 							}
 
 							* Koch et al. (2016) variables model
@@ -181,6 +190,7 @@ if price == "yes" {
 								// determine lag length using AIC/BIC!!!
 								reg ln_return_eua L.ln_return_eua $ln_return_explanatory if est_win_`x'_`y'`i' == 1, robust
 								scalar df_`x'_`y'`i' = e(df_r)
+								scalar num_par_`x'_`y'`i' = e(N) - e(df_r)
 
 								predict NR_`x'_`y'`i' if est_win_`x'_`y'`i' == 1
 
@@ -238,19 +248,23 @@ if volume == "yes" {
 				reg ln_return_eua_vol est_win if est_win == 1, robust noconst
 				gen NR = e(b)[1, 1]
 				scalar df = e(df_r)
+				scalar num_par = e(N) - e(df_r)
 			}
 
 		* Zero mean
 			else if reg_type == 2 {
 				gen NR = 0
 				reg ln_return_eua_vol est_win if est_win == 1, robust noconst
-				scalar df = e(df_r)
+				scalar df = e(N)
+				scalar num_par = 0
 			}
 
 		* Koch et al. (2016) variables model
 			else if reg_type == 3 {
 				reg ln_return_eua_vol L.ln_return_eua_vol $ln_return_explanatory if est_win == 1, robust
 				scalar df = e(df_r)
+				scalar num_par = e(N) - e(df_r)
+
 
 				predict NR if est_win == 1
 
@@ -288,13 +302,18 @@ if volume == "yes" {
 								reg ln_return_eua_vol est_win_`x'_`y'`i' if est_win_`x'_`y'`i' == 1, robust noconst
 								gen NR_`x'_`y'`i' = e(b)[1, 1]
 								scalar df_`x'_`y'`i' = e(df_r)
+								scalar num_par_`x'_`y'`i' = e(N) - e(df_r)
+
+
 							}
 
 							* Zero Mean
 							else if reg_type == 2 {
 								gen NR_`x'_`y'`i' = 0
 								reg ln_return_eua_vol est_win_`x'_`y'`i' if est_win_`x'_`y'`i' == 1, robust noconst
-								scalar df_`x'_`y'`i' = e(df_r)
+								scalar df_`x'_`y'`i' = e(N)
+								scalar num_par_`x'_`y'`i' = 0
+
 							}
 
 							* Koch et al. (2016) variables model
@@ -302,6 +321,7 @@ if volume == "yes" {
 								// determine lag length using AIC/BIC!!!
 								reg ln_return_eua_vol L.ln_return_eua_vol $ln_return_explanatory if est_win_`x'_`y'`i' == 1, robust
 								scalar df_`x'_`y'`i' = e(df_r)
+								scalar num_par_`x'_`y'`i' = e(N) - e(df_r)
 
 								predict NR_`x'_`y'`i' if est_win_`x'_`y'`i' == 1
 

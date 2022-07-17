@@ -10,9 +10,7 @@
             summ TSS
             scalar TSS_aux = r(mean)
             summ trading_date if est_win == 1
-            // - 2 is only if two parameters need to be estimated?!
-            // formula wrong?! what is subtracted (number of variables used in calculation) and r(max)-r(min) doesnt consider missing values
-            scalar var_AR = (1/(r(max)-r(min)-2))*TSS_aux
+            scalar var_AR = (1/(r(max)-r(min)+1-num_par))*TSS_aux
             scalar SD_AR = sqrt(var_AR)
             capture drop AR_squared TSS 
 		}
@@ -32,7 +30,7 @@
                             summ TSS
                             scalar TSS_aux = r(mean)
                             summ trading_date if est_win_`x'_`y'`i' == 1
-                            scalar var_AR_`x'_`y'`i' = (1/(r(max)-r(min)-2))*TSS_aux
+                            scalar var_AR_`x'_`y'`i' = (1/(r(max)-r(min)+1-num_par_`x'_`y'`i'))*TSS_aux
                             scalar SD_AR_`x'_`y'`i' = sqrt(var_AR_`x'_`y'`i')
                             capture drop AR_squared TSS
                             scalar drop TSS_aux 
@@ -56,9 +54,7 @@
             summ TSS
             scalar TSS_aux = r(mean)
             summ trading_date if est_win == 1
-            // - 2 is only if two parameters need to be estimated?!
-            // formula wrong?! what is subtracted (number of variables used in calculation) and r(max)-r(min) doesnt consider missing values
-            scalar var_AR = (1/(r(max)-r(min)-2))*TSS_aux
+            scalar var_AR = (1/(r(max)-r(min)+1-num_par))*TSS_aux
             scalar SD_AR = sqrt(var_AR)
             capture drop AR_squared TSS 
 		}
@@ -78,7 +74,7 @@
                             summ TSS
                             scalar TSS_aux = r(mean)
                             summ trading_date if est_win_`x'_`y'`i' == 1
-                            scalar var_AR_`x'_`y'`i' = (1/(r(max)-r(min)-2))*TSS_aux
+                            scalar var_AR_`x'_`y'`i' = (1/(r(max)-r(min)+1-num_par_`x'_`y'`i'))*TSS_aux
                             scalar SD_AR_`x'_`y'`i' = sqrt(var_AR_`x'_`y'`i')
                             capture drop AR_squared TSS
                             scalar drop TSS_aux 
