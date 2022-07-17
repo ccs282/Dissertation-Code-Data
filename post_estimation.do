@@ -102,8 +102,8 @@
                 scalar SD_CAR_post = sqrt(var_CAR_post)
 
             * Event Day
-                scalar var_CAR_event = var_AR
-                scalar SD_CAR_event = sqrt(var_CAR_event)
+                scalar var_AR_event = var_AR
+                scalar SD_AR_event = sqrt(var_AR_event)
 		}
 
         else {
@@ -125,8 +125,8 @@
                                 scalar SD_CAR_post_`x'_`y'`i' = sqrt(var_CAR_post_`x'_`y'`i')
 
                             * Event Day
-                                scalar var_CAR_event_`x'_`y'`i' = var_AR_`x'_`y'`i'
-                                scalar SD_CAR_event_`x'_`y'`i' = sqrt(var_CAR_event_`x'_`y'`i')
+                                scalar var_AR_event_`x'_`y'`i' = var_AR_`x'_`y'`i'
+                                scalar SD_AR_event_`x'_`y'`i' = sqrt(var_AR_event_`x'_`y'`i')
 						}
 					}
 				}
@@ -179,15 +179,15 @@
                         forvalues i = 1(1)10 {
                             capture confirm scalar `x'_`y'`i'_d
                             if _rc == 0 {
-                                gen v_var_CAR_event_`x'_`y'`i' = var_CAR_event_`x'_`y'`i'
+                                gen v_var_AR_event_`x'_`y'`i' = var_AR_event_`x'_`y'`i'
                             }
                         }
                     }
                 }
 
-                egen v_var_CAR_event_sum = rowtotal(v_*)
-                scalar var_CAR_event_avg = v_var_CAR_event_sum[1]/No^2
-                scalar SD_CAR_event_avg = sqrt(var_CAR_event_avg)
+                egen v_var_AR_event_sum = rowtotal(v_*)
+                scalar var_AR_event_avg = v_var_AR_event_sum[1]/No^2
+                scalar SD_AR_event_avg = sqrt(var_AR_event_avg)
 
                 capture drop v_*
 
@@ -222,7 +222,7 @@
                 scalar p_pre = ttail(df ,abs(t_pre))*2
 
             * Event day
-                scalar t_event = CAR_event/SD_CAR_event
+                scalar t_event = AR_event/SD_AR_event
                 scalar p_event = ttail(df ,abs(t_event))*2
 
             * Post-event
@@ -240,7 +240,7 @@
 
                 forvalues t = -`pre'(1)`post' {
                     local nom = `t' + event_length_pre + 1
-                    scalar t_d`nom' = CAR_d`nom'/SD_CAR_event
+                    scalar t_d`nom' = AR_d`nom'/SD_AR_event
                     scalar p_d`nom' = ttail(df ,abs(t_d`nom'))*2
 				}
 
@@ -261,7 +261,7 @@
                                 scalar p_pre_`x'_`y'`i' = ttail(df_`x'_`y'`i' ,abs(t_pre_`x'_`y'`i'))*2
 
                             * Event day
-                                scalar t_event_`x'_`y'`i' = CAR_event_`x'_`y'`i'/SD_CAR_event_`x'_`y'`i'
+                                scalar t_event_`x'_`y'`i' = AR_event_`x'_`y'`i'/SD_AR_event_`x'_`y'`i'
                                 scalar p_event_`x'_`y'`i' = ttail(df_`x'_`y'`i' ,abs(t_event_`x'_`y'`i'))*2
 
                             * Post-event
@@ -279,7 +279,7 @@
 
                                 forvalues t = -`pre'(1)`post' {
                                     local nom = `t' + event_length_pre + 1
-                                    scalar t_d`nom'_`x'_`y'`i' = CAR_d`nom'_`x'_`y'`i'/SD_CAR_event_`x'_`y'`i'
+                                    scalar t_d`nom'_`x'_`y'`i' = AR_d`nom'_`x'_`y'`i'/SD_AR_event_`x'_`y'`i'
                                     scalar p_d`nom'_`x'_`y'`i' = ttail(df_`x'_`y'`i' ,abs(t_d`nom'_`x'_`y'`i'))*2
                                 }
 						}
@@ -309,7 +309,7 @@
                     scalar p_pre_avg = ttail(df_avg ,abs(t_pre_avg))*2
 
                 * Event day
-                    scalar t_event_avg = CAR_event_avg/SD_CAR_event_avg
+                    scalar t_event_avg = AR_event_avg/SD_AR_event_avg
                     scalar p_event_avg = ttail(df_avg ,abs(t_event_avg))*2
 
                 * Post-event
@@ -323,7 +323,7 @@
                 * Individual days within event window
                     forvalues t = -`pre'(1)`post' {
                         local nom = `t' + event_length_pre + 1
-                        scalar t_d`nom'_avg = CAR_d`nom'_avg/SD_CAR_event_avg
+                        scalar t_d`nom'_avg = AR_d`nom'_avg/SD_AR_event_avg
                         scalar p_d`nom'_avg = ttail(df_avg ,abs(t_d`nom'_avg))*2
 				    }
         }

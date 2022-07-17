@@ -374,7 +374,7 @@ if volume == "yes" {
 
 		if test_specific_date == "yes" {
 			capture drop CAR*
-			//tempname CAR_ew CAR_pre CAR_post CAR_event
+			//tempname CAR_ew CAR_pre CAR_post AR_event
 			
 			* Event window
 				egen CARa = total(AR) if ew == 1
@@ -394,11 +394,11 @@ if volume == "yes" {
 			* Event Day
 				egen CARd = total(AR) if event_date == 1
 				summ CARd, meanonly
-				scalar CAR_event = r(mean)
+				scalar AR_event = r(mean)
 			
 			capture drop CAR*
 
-			* Every single day within the event window
+			* Every single day within the event window (not cumulative)
 				tab date if ew == 1, matrow(matrix_)
 
 				global pre = event_length_pre
@@ -409,11 +409,20 @@ if volume == "yes" {
 					local nom = `t' + event_length_pre + 1
 					egen CAR_temp = total(AR) if date == matrix_[`nom', 1]
 					summ CAR_temp, meanonly
-					scalar CAR_d`nom' = `r(mean)'
+					scalar AR_d`nom' = `r(mean)'
 				}
 
 				capture drop CAR*
 
+			* CAR each day (rolling sum of AR)
+				gen CAR = .
+				replace CAR = sum(AR) if ew == 1
+
+				forvalues t = -$pre(1)$post {
+					local nom = `t' + event_length_pre + 1
+					summ CAR if deviation == `t', meanonly
+					scalar CAR`nom' = r(mean)
+				}
 		}
 
 		else {
@@ -443,9 +452,13 @@ if volume == "yes" {
 							* Event Day
 								egen CARd = total(AR_`x'_`y'`i') if event_date_`x'_`y'`i' == 1
 								summ CARd, meanonly
-								scalar CAR_event_`x'_`y'`i' = r(mean)
+								scalar AR_event_`x'_`y'`i' = r(mean)
 
-							capture drop CAR*
+							capture drop CARa
+							capture drop CARb
+							capture drop CARc
+							capture drop CARd
+
 
 							* Every single day within the event window
 								tab date if ew_`x'_`y'`i' == 1, matrow(mat_`x'_`y'`i')
@@ -455,66 +468,24 @@ if volume == "yes" {
 
 								// let it run from 1 to ew_length instead? same outcome, easier though
 								forvalues t = -$pre(1)$post {
-									capture drop CAR*
+									capture drop CAR_t*
 									local nom = `t' + event_length_pre + 1
 									egen CAR_temp = total(AR_`x'_`y'`i') if date == mat_`x'_`y'`i'[`nom', 1]
 									summ CAR_temp, meanonly
-									scalar CAR_d`nom'_`x'_`y'`i' = `r(mean)'
+									scalar AR_d`nom'_`x'_`y'`i' = `r(mean)'
 								}
 
-								capture drop CAR*
-						}
-					}
-				}
-			}
+								capture drop CAR_t*
 
+							* CAR each day (rolling sum of AR)
+								gen CAR_`x'_`y'`i' = .
+								replace CAR_`x'_`y'`i' = sum(AR_`x'_`y'`i') if ew_`x'_`y'`i' == 1
 
-
-			foreach x in bg cz dk fi de el hu it nl pl pt ro sk si es uk xx {
-				foreach y in main alt new rev follow leak canc parl nuc {
-					forvalues i = 1(1)10 {
-						capture confirm scalar `x'_`y'`i'_d
-						if _rc == 0 {
-							* Event window
-								egen CARa = total(AR_`x'_`y'`i') if ew_`x'_`y'`i' == 1
-								summ CARa, meanonly
-								scalar CAR_ew_`x'_`y'`i' = r(mean)
-		
-							* Pre-event
-								summ date if event_date_`x'_`y'`i' == 1, meanonly
-								egen CARb = total(AR_`x'_`y'`i') if ew_`x'_`y'`i' == 1 & date < `r(mean)'
-								summ CARb, meanonly
-								scalar CAR_pre_`x'_`y'`i' = r(mean)
-
-							* Post-event
-								summ date if event_date_`x'_`y'`i' == 1, meanonly
-								egen CARc = total(AR_`x'_`y'`i') if ew_`x'_`y'`i' == 1 & date > `r(mean)'
-								summ CARc, meanonly
-								scalar CAR_post_`x'_`y'`i' = r(mean)
-
-							* Event Day
-								egen CARd = total(AR_`x'_`y'`i') if event_date_`x'_`y'`i' == 1
-								summ CARd, meanonly
-								scalar CAR_event_`x'_`y'`i' = r(mean)
-
-							capture drop CAR*
-
-							* Every single day within the event window
-								tab date if ew_`x'_`y'`i' == 1, matrow(mat_`x'_`y'`i')
-
-								global pre = event_length_pre
-								global post = event_length_post
-
-								// let it run from 1 to ew_length instead? same outcome, easier though
 								forvalues t = -$pre(1)$post {
-									capture drop CAR*
 									local nom = `t' + event_length_pre + 1
-									egen CAR_temp = total(AR_`x'_`y'`i') if date == mat_`x'_`y'`i'[`nom', 1]
-									summ CAR_temp, meanonly
-									scalar CAR_d`nom'_`x'_`y'`i' = `r(mean)'
+									summ CAR_`x'_`y'`i' if deviation_`x'_`y'`i' == `t', meanonly
+									scalar CAR`nom'_`x'_`y'`i' = r(mean)
 								}
-
-								capture drop CAR*
 						}
 					}
 				}
@@ -583,15 +554,15 @@ if volume == "yes" {
 						forvalues i = 1(1)10 {
 							capture confirm scalar `x'_`y'`i'_d
 							if _rc == 0 {
-								capture drop v_CAR_event_`x'_`y'`i'
-                            	gen v_CAR_event_`x'_`y'`i' = CAR_event_`x'_`y'`i'
+								capture drop v_AR_event_`x'_`y'`i'
+                            	gen v_AR_event_`x'_`y'`i' = AR_event_`x'_`y'`i'
 							}
 						}
 					}
 				}
 
-                egen v_CAR_event_avg = rowmean(v_CAR*)
-                scalar CAR_event_avg = v_CAR_event_avg[1]
+                egen v_AR_event_avg = rowmean(v_AR*)
+                scalar AR_event_avg = v_AR_event_avg[1]
                 capture drop v_*
 
             * Event window
@@ -612,7 +583,7 @@ if volume == "yes" {
                 scalar CAR_ew_avg = v_CAR_ew_avg[1]
                 capture drop v_*
 
-			* Every single day within the event window
+			* Every single day within the event window (not cumulative; individual days)
 
 				foreach x in bg cz dk fi de el hu it nl pl pt ro sk si es uk xx {
 					foreach y in main alt new rev follow leak canc parl nuc {
@@ -621,8 +592,8 @@ if volume == "yes" {
 							if _rc == 0 {
 								forvalues t = -$pre(1)$post {
 									local nom = `t' + event_length_pre + 1
-									capture drop v_CAR_d`nom'_`x'_`y'`i'
-									gen v_CAR_d`nom'_`x'_`y'`i' = CAR_d`nom'_`x'_`y'`i'
+									capture drop v_AR_d`nom'_`x'_`y'`i'
+									gen v_AR_d`nom'_`x'_`y'`i' = AR_d`nom'_`x'_`y'`i'
 								}
 							}
 						}
@@ -631,9 +602,36 @@ if volume == "yes" {
 
 				forvalues t = -$pre(1)$post {
 					local nom = `t' + event_length_pre + 1
-					egen v_CAR_d`nom'_avg = rowmean(v_CAR_d`nom'*)
-                	scalar CAR_d`nom'_avg = v_CAR_d`nom'_avg[1]
+					egen v_AR_d`nom'_avg = rowmean(v_AR_d`nom'*)
+                	scalar AR_d`nom'_avg = v_AR_d`nom'_avg[1]
 				}
+				
+				capture drop v_*
+
+			* Rolling cumulative average
+
+				foreach x in bg cz dk fi de el hu it nl pl pt ro sk si es uk xx {
+					foreach y in main alt new rev follow leak canc parl nuc {
+						forvalues i = 1(1)10 {
+							capture confirm scalar `x'_`y'`i'_d
+							if _rc == 0 {
+								forvalues t = -$pre(1)$post {
+									local nom = `t' + event_length_pre + 1
+									//capture drop v_CAR_`x'_`y'`i'
+									capture gen v_CAR_`x'_`y'`i' = .
+									replace v_CAR_`x'_`y'`i' = CAR`nom'_`x'_`y'`i' if _n == `nom'
+								}
+							}
+						}
+					}
+				}
+				
+				egen v_CAR_avg = rowmean(v_CAR*)
+
+				forvalues t = -$pre(1)$post {
+					local nom = `t' + event_length_pre + 1
+                	scalar CAR_d`nom'_avg = v_CAR_avg[`nom']
+				}				
 				
 				capture drop v_*
 		}
