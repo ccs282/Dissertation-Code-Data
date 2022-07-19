@@ -28,7 +28,33 @@
 		erase "`var'.dta"
 	}
 
+
 	global ln_return_explanatory ln_return_oil ln_return_coal ln_return_gas ln_return_elec ln_return_gsci ln_return_vix ln_return_stoxx ln_return_diff_baa_aaa ln_return_ecb_spot_3m /*ln_return_cer*/
+
+	save data, replace
+
+	foreach var of global ln_return_explanatory {
+		drop if `var' == .
+		capture drop D_`var'
+		gen D_`var' = `var'[_n] - `var'[_n - 1] if _n > 1
+		save `var', replace
+		use `var', clear
+		keep D_`var' date
+		save, replace
+		use data, clear
+		// why not use date as matching variable?
+		mmerge date using `var'
+		drop _merge
+		save data, replace
+		erase "`var'.dta"
+	}
+
+
+	global D_ln_return_explanatory_full D_ln_return_oil D_ln_return_coal D_ln_return_gas D_ln_return_elec D_ln_return_gsci D_ln_return_vix D_ln_return_stoxx D_ln_return_diff_baa_aaa D_ln_return_ecb_spot_3m /*ln_return_cer*/
+
+    global D_ln_return_explanatory_2 ln_return_oil ln_return_elec ln_return_gsci ln_return_vix ln_return_stoxx ln_return_diff_baa_aaa ln_return_ecb_spot_3m D_ln_return_gas D_ln_return_coal
+
+
 
 /*
 	L.ln_return_oil L.ln_return_coal L.ln_return_gas L.ln_return_elec L.ln_return_gsci L.ln_return_vix L.ln_return_stoxx L.ln_return_diff_baa_aaa L.ln_return_cer L.ln_return_ecb_spot_3m
@@ -93,6 +119,20 @@
 	save data, replace
 	erase "eua_vol.dta"
 
+	drop if ln_return_eua == .
+	capture drop D_ln_return_eua
+	gen D_ln_return_eua = ln_return_eua[_n] - ln_return_eua[_n - 1] if _n > 1
+	save D_ln_return_eua, replace
+	use D_ln_return_eua, clear
+	keep D_ln_return_eua date
+	save, replace
+	use data, clear
+	// why not use date as matching variable?
+	mmerge date using D_ln_return_eua
+	drop _merge
+	save data, replace
+	erase "D_ln_return_eua.dta"
+
 	
 	forvalues i = 7(1)22 {
 		if `i' < 10 {
@@ -103,8 +143,6 @@
 		}
 	}
 
-	
-	
 	order ln_return_eua, after(eua)
 	
 	* Create lagged dependent variable
@@ -154,6 +192,19 @@
 	replace trading_date = trading_date[_n-1] + 1 if _n != 1 // there are missing dates (weekends etc.)
 
 	tsset trading_date, d
+/*
+** Difference log returns
+
+	foreach var of global ln_return_explanatory {
+		capture drop D_`var'
+		gen D_`var' = D.`var'
+	}
+
+
+	global ln_return_explanatory_3 D_ln_return_oil D_ln_return_elec D_ln_return_gsci D_ln_return_vix D_ln_return_stoxx D_ln_return_diff_baa_aaa D_ln_return_ecb_spot_3m D_ln_return_gas D_ln_return_coal
+*/
+
+
 
 ** Create lagged dependent variable
 	
