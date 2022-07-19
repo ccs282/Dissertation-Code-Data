@@ -155,6 +155,31 @@ if price == "yes" {
 				drop NR_* tempv
 			}
 
+			else if reg_type == 3.1 {
+				reg ln_return_eua L.ln_return_eua $D_ln_return_explanatory_2 if est_win == 1, robust
+				scalar df = e(df_r)
+				scalar num_par = e(N) - e(df_r)
+
+
+				predict NR if est_win == 1
+
+				summ trading_date if event_date == 1
+				capture drop tempv 
+				gen tempv = ln_return_eua if trading_date < (r(mean) - event_length_pre) // create a temporary variable for the recursive estimation (bc. of the lagged dependent variable)
+
+				reg tempv L.tempv $D_ln_return_explanatory_2 if est_win == 1, robust
+	
+				local ew_length = event_length_post + event_length_pre + 1
+				forvalues i = 1(1)`ew_length' {
+					summ trading_date if event_date == 1
+					predict NR_`i' if trading_date == (r(mean) - event_length_pre -1 + `i')
+					replace tempv = NR_`i' if trading_date == (r(mean) - event_length_pre -1 + `i')
+					replace NR = NR_`i' if trading_date == (r(mean) - event_length_pre -1 + `i')
+				}
+
+				drop NR_* tempv
+			}
+
 			order NR, after(ln_return_eua) 
 		}
 
