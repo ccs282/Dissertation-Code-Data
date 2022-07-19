@@ -35,7 +35,7 @@ if price == "yes" {
             summ trading_date if event_date_fe == 1
             replace est_win_fe = 1 if (trading_date >= r(mean) - event_length_pre - est_length) & (trading_date < r(mean) - event_length_pre) & (date >= 20080401)
             
-            foreach x in variables const_mean const_mean_trim zero_mean levels{
+            foreach x in variables variables_2 variables_3 const_mean const_mean_trim zero_mean levels{
                 
                 ** generate predictions
                 if  "`x'" == "variables" {
@@ -75,6 +75,38 @@ if price == "yes" {
                     summ trading_date if event_date_fe == 1
                     gen tempv = eua if trading_date < (r(mean) - event_length_pre) 
                     reg tempv L.tempv $explanatory if est_win_fe == 1, robust
+
+                    local ew_length = event_length_post + event_length_pre + 1
+                    forvalues i = 1(1)`ew_length' {
+                        summ trading_date if event_date_fe == 1
+                        predict NR_`i' if trading_date == (r(mean) - event_length_pre -1 + `i')
+                        replace tempv = NR_`i' if trading_date == (r(mean) - event_length_pre -1 + `i')
+                        capture gen NR_`x'= .
+                        replace NR_`x' = NR_`i' if trading_date == (r(mean) - event_length_pre -1 + `i')
+                    }
+                }
+
+                else if  "`x'" == "variables_2" {
+                    capture drop tempv 
+                    summ trading_date if event_date_fe == 1
+                    gen tempv = ln_return_eua if trading_date < (r(mean) - event_length_pre) 
+                    reg tempv L.tempv $D_ln_return_explanatory_2 if est_win_fe == 1, robust
+
+                    local ew_length = event_length_post + event_length_pre + 1
+                    forvalues i = 1(1)`ew_length' {
+                        summ trading_date if event_date_fe == 1
+                        predict NR_`i' if trading_date == (r(mean) - event_length_pre -1 + `i')
+                        replace tempv = NR_`i' if trading_date == (r(mean) - event_length_pre -1 + `i')
+                        capture gen NR_`x'= .
+                        replace NR_`x' = NR_`i' if trading_date == (r(mean) - event_length_pre -1 + `i')
+                    }
+                }
+
+                else if  "`x'" == "variables_3" {
+                    capture drop tempv 
+                    summ trading_date if event_date_fe == 1
+                    gen tempv = ln_return_eua if trading_date < (r(mean) - event_length_pre) 
+                    reg tempv L.tempv ln_return_oil ln_return_elec D_ln_return_gsci ln_return_vix D_ln_return_stoxx ln_return_diff_baa_aaa ln_return_ecb_spot_3m D_ln_return_gas D_ln_return_coal if est_win_fe == 1, robust
 
                     local ew_length = event_length_post + event_length_pre + 1
                     forvalues i = 1(1)`ew_length' {
