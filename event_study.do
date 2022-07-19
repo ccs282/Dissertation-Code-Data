@@ -285,8 +285,6 @@ if price == "yes" {
 
 								drop NR_`x'_`y'`i'_* tempv
 							}
-
-
 						}
 					}
 				}

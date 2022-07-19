@@ -106,7 +106,7 @@ if price == "yes" {
                     capture drop tempv 
                     summ trading_date if event_date_fe == 1
                     gen tempv = ln_return_eua if trading_date < (r(mean) - event_length_pre) 
-                    reg tempv L.tempv ln_return_oil ln_return_elec D_ln_return_gsci ln_return_vix D_ln_return_stoxx ln_return_diff_baa_aaa ln_return_ecb_spot_3m D_ln_return_gas D_ln_return_coal if est_win_fe == 1, robust
+                    reg tempv L.tempv D_ln_return_oil D_ln_return_elec D_ln_return_gsci ln_return_vix D_ln_return_stoxx ln_return_diff_baa_aaa ln_return_ecb_spot_3m D_ln_return_gas D_ln_return_coal if est_win_fe == 1, robust
 
                     local ew_length = event_length_post + event_length_pre + 1
                     forvalues i = 1(1)`ew_length' {
