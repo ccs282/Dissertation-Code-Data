@@ -89,7 +89,12 @@ foreach var of varlist oil coal gas elec gsci vix stoxx diff_baa_aaa ecb_spot_3m
 	summ ln_return_`var' if date > 20080313 & date < 20140501, d
 }
 
-tabstat ln_return_eua ln_return_oil ln_return_coal ln_return_gas ln_return_elec ln_return_gsci ln_return_vix ln_return_stoxx ln_return_diff_baa_aaa ln_return_ecb_spot_3m if date > 20080313 & date < 20140501, stat(mean sd sk k min max)
+tabstat ln_return_eua ln_return_oil ln_return_coal D_ln_return_coal ln_return_gas D_ln_return_gas ln_return_elec ln_return_gsci ln_return_vix ln_return_stoxx ln_return_diff_baa_aaa ln_return_ecb_spot_3m if date > 20080313 & date <= 20220714, stat(mean sd min max skewness kurtosis)
+
+asdoc tabstat ln_return_eua ln_return_oil ln_return_coal D_ln_return_coal ln_return_gas D_ln_return_gas ln_return_elec ln_return_gsci ln_return_vix ln_return_stoxx ln_return_diff_baa_aaa ln_return_ecb_spot_3m if date > 20080313 & date <= 20220714, stat(mean sd min max skewness kurtosis N var cv median semean) dec(4) 
+
+
+
 
 
 capture drop missing
