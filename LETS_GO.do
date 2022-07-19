@@ -43,7 +43,7 @@
 			scalar est_length = 255 // length of estimation window (days)
 			scalar earliest_date = 20080314 // earliest date for estimation window
 						
-			scalar reg_type = 3 // 1: constant mean return 2: zero mean return 3: model with many explanatory variables 
+			scalar reg_type = 3.1 // 1: constant mean return 2: zero mean return 3: model with many explanatory variables 3.1: first difference of log returns for coal+gas 3.2: for all D_
 			
 			scalar show_days = 1 // 1: show not only pre / post estimations but also every single day
 			
@@ -61,14 +61,27 @@
 /*	
 foreach var of varlist eua oil coal gas elec gsci vix stoxx diff_baa_aaa ecb_spot_3m{
 	dfuller `var'
-	kpss `var'
+	scalar dfuller_`var' = r(p)
+	kpss `var' 
+	
 }
 
 
-foreach var of varlist ln_return_eua ln_return_oil ln_return_coal ln_return_gas ln_return_elec ln_return_gsci ln_return_vix ln_return_stoxx ln_return_diff_baa_aaa ln_return_ecb_spot_3m {
-	dfuller `var' 
-	kpss `var'
+foreach var of varlist ln_return_eua D_ln_return_eua ln_return_oil D_ln_return_oil ln_return_coal D_ln_return_coal ln_return_gas D_ln_return_gas ln_return_elec D_ln_return_elec ln_return_gsci D_ln_return_gsci ln_return_vix D_ln_return_vix ln_return_stoxx D_ln_return_stoxx ln_return_diff_baa_aaa D_ln_return_diff_baa_aaa ln_return_ecb_spot_3m  D_ln_return_ecb_spot_3m {
+	dfuller `var' if year < 2019
+	scalar dfuller_`var' = r(p)
+	kpss `var' if year < 2019
 }
+
+foreach var of varlist ln_return_coal D_ln_return_coal ln_return_gas D_ln_return_gas {
+	kpss `var' 
+}
+
+
+
+
+// problematic (KPSS) for full sample: coal**; gas*
+// problematic for greater than 2019: oil*; GSCI**; STOXX*; 
 
 
 /*	
@@ -132,7 +145,7 @@ twoway line vrb cm length if length < 500
 
 
 	foreach y in MSFE RMSFE MAFE {
-		tabstat `y'_variables `y'_const_mean `y'_const_mean_trim `y'_zero_mean `y'_levels if year > 2015 & year <= 2022, stat(mean sd min max sk k)
+		tabstat `y'_variables `y'_variables_2 `y'_variables_3 `y'_const_mean `y'_const_mean_trim `y'_zero_mean `y'_levels if year > 2007 & year <= 2022, stat(mean sd min max sk k)
 	}
 	
 	foreach y in MSFE RMSFE MAFE {
@@ -146,7 +159,7 @@ twoway line vrb cm length if length < 500
 
 	
 	/*
-	twoway line RMSFE_variables RMSFE_const_mean RMSFE_zero_mean stata_date if year > 2008 & year < 2012, xlabel(, angle(vertical))
+	twoway line RMSFE_variables_2 RMSFE_variables RMSFE_const_mean RMSFE_zero_mean stata_date if year > 2007 & year < 2023, xlabel(, angle(vertical))
 	
 		twoway line RMSFE_levels stata_date if year > 2008 & year < 2023, xlabel(, angle(vertical))
 
