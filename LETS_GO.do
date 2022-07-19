@@ -30,7 +30,7 @@
 		* Test one specific date only (independent of country exit dates)
 			scalar test_specific_date = "no" // "yes" when determining one specific date only; must be unequal "yes" when analysing countries' coal phase-outs
 
-			scalar date_specific = 20210930 // determine date to be tested if test_specific_date == "yes"
+			scalar date_specific = 20190128 // determine date to be tested if test_specific_date == "yes"
 
 		* Phase out announcements
 			quietly do phase_out
@@ -68,9 +68,9 @@ foreach var of varlist eua oil coal gas elec gsci vix stoxx diff_baa_aaa ecb_spo
 
 
 foreach var of varlist ln_return_eua D_ln_return_eua ln_return_oil D_ln_return_oil ln_return_coal D_ln_return_coal ln_return_gas D_ln_return_gas ln_return_elec D_ln_return_elec ln_return_gsci D_ln_return_gsci ln_return_vix D_ln_return_vix ln_return_stoxx D_ln_return_stoxx ln_return_diff_baa_aaa D_ln_return_diff_baa_aaa ln_return_ecb_spot_3m  D_ln_return_ecb_spot_3m {
-	dfuller `var' if year < 2019
+	dfuller `var' if year > 2014
 	scalar dfuller_`var' = r(p)
-	kpss `var' if year < 2019
+	kpss `var' if year > 2014
 }
 
 foreach var of varlist ln_return_coal D_ln_return_coal ln_return_gas D_ln_return_gas {
@@ -161,7 +161,7 @@ twoway line vrb cm length if length < 500
 
 
 	foreach y in MSFE RMSFE MAFE {
-		tabstat `y'_variables `y'_variables_2 `y'_variables_3 `y'_const_mean `y'_const_mean_trim `y'_zero_mean `y'_levels if year > 2007 & year <= 2022, stat(mean sd min max sk k)
+		tabstat `y'_variables `y'_variables_2 `y'_variables_3 `y'_const_mean `y'_const_mean_trim `y'_zero_mean `y'_levels if year > 2014 & year <= 2022, stat(mean sd min max sk k)
 	}
 	
 	foreach y in MSFE RMSFE MAFE {
