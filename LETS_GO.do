@@ -43,7 +43,7 @@
 			scalar est_length = 255 // length of estimation window (days)
 			scalar earliest_date = 20080314 // earliest date for estimation window
 						
-			scalar reg_type = 3.1 // 1: constant mean return 2: zero mean return 3: model with many explanatory variables 3.1: first difference of log returns for coal+gas 3.2: for all D_
+			scalar reg_type = 3 // 1: constant mean return 2: zero mean return 3: model with many explanatory variables 3.1: log returns for all variables 3.2: for all D_
 			
 			scalar show_days = 1 // 1: show not only pre / post estimations but also every single day
 			
@@ -55,12 +55,14 @@
 
 *** Postestimation: Test significance
 	quietly do post_estimation
-	quietly do significance
+	 do significance
 	
 *** Formatted Output
-do output
-
-	
+	do output
+/*
+	/*
+	do lets_go_loop
+	*/
 /*	
 foreach var of varlist eua oil coal gas elec gsci vix stoxx diff_baa_aaa ecb_spot_3m{
 	dfuller `var'

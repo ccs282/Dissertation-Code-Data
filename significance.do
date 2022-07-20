@@ -20,7 +20,7 @@
                             }
                             else {
                                 local temp = event_length_post+event_length_pre+1
-                                matrix def output_phases = (est_length, `temp', reg_type, .)
+                                matrix def output_phases = (est_length, `temp', reg_type, No)
                                 matrix coln output_phases = CAR_pre AR_event CAR_post CAR_window
                                 matrix output_phases = output_phases \ `x'_`y'`i'_phases
                             }
