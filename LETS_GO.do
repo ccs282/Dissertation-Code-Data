@@ -55,7 +55,10 @@
 
 *** Postestimation: Test significance
 	quietly do post_estimation
-	do significance
+	quietly do significance
+	
+*** Formatted Output
+do output
 
 	
 /*	
@@ -242,6 +245,12 @@ di year_obs[1]
 	
 	matrix list uk_main1_phases
 	asdoc matlist test, replace
+	
+	matlist test
+	matrix test = J(3, 3, .)
+	
+	matrix test2 = test\uk_main1_phases
+	matrix list test2
 	
 	
 	
