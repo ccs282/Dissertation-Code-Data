@@ -130,7 +130,7 @@ if price == "yes" {
 			}
 
 		* Koch et al. (2016) variables model
-			else if reg_type == 3 {
+			else if reg_type == 3.1 {
 				reg ln_return_eua L.ln_return_eua $ln_return_explanatory if est_win == 1, robust
 				scalar df = e(df_r)
 				scalar num_par = e(N) - e(df_r)
@@ -155,7 +155,7 @@ if price == "yes" {
 				drop NR_* tempv
 			}
 
-			else if reg_type == 3.1 {
+			else if reg_type == 3 {
 				reg ln_return_eua L.ln_return_eua $D_ln_return_explanatory_2 if est_win == 1, robust
 				scalar df = e(df_r)
 				scalar num_par = e(N) - e(df_r)
@@ -211,7 +211,7 @@ if price == "yes" {
 							}
 
 							* Koch et al. (2016) variables model
-							else if reg_type == 3 {
+							else if reg_type == 3.1 {
 								// determine lag length using AIC/BIC!!!
 								reg ln_return_eua L.ln_return_eua $ln_return_explanatory if est_win_`x'_`y'`i' == 1, robust
 								scalar df_`x'_`y'`i' = e(df_r)
@@ -236,7 +236,7 @@ if price == "yes" {
 								drop NR_`x'_`y'`i'_* tempv
 							}
 
-							else if reg_type == 3.1 {
+							else if reg_type == 3 {
 								// determine lag length using AIC/BIC!!!
 								reg ln_return_eua L.ln_return_eua $D_ln_return_explanatory_2 if est_win_`x'_`y'`i' == 1, robust
 								scalar df_`x'_`y'`i' = e(df_r)
@@ -335,7 +335,7 @@ if volume == "yes" {
 			}
 
 		* Koch et al. (2016) variables model
-			else if reg_type == 3 {
+			else if reg_type == 3.1 {
 				reg ln_return_eua_vol L.ln_return_eua_vol $ln_return_explanatory if est_win == 1, robust
 				scalar df = e(df_r)
 				scalar num_par = e(N) - e(df_r)
@@ -392,7 +392,7 @@ if volume == "yes" {
 							}
 
 							* Koch et al. (2016) variables model
-							else if reg_type == 3 {
+							else if reg_type == 3.1 {
 								// determine lag length using AIC/BIC!!!
 								reg ln_return_eua_vol L.ln_return_eua_vol $ln_return_explanatory if est_win_`x'_`y'`i' == 1, robust
 								scalar df_`x'_`y'`i' = e(df_r)
