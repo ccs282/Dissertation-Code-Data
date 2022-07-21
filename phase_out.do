@@ -18,6 +18,7 @@ foreach x in bg cz dk fi de el hu it nl pl pt ro sk si es uk xx {
 
 use data, clear
 
+	** if phase-out date is not a trading date, choose the next trading date:
 				foreach x in bg cz dk fi de el hu it nl pl pt ro sk si es uk xx {
 					foreach y in main alt new rev follow leak canc parl nuc {
 						forvalues i = 1(1)10 {

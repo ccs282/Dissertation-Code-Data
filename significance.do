@@ -69,6 +69,7 @@
 
                                     matlist `x'_`y'`i'_days, lines(rowt) title("`x'_`y'`i': Individual Days (`r(mean)')")
 
+                                    * formatted output for days
                                     capture confirm matrix output_days 
                                     if _rc == 0 {
                                         matrix output_days = output_days \ `x'_`y'`i'_days
@@ -101,7 +102,6 @@
                 matrix coln avg_phases = CAR_pre_avg AR_event_avg CAR_post_avg CAR_window_avg
 
                 matrix output_phases = output_phases \ avg_phases
-
 
                 if show_days == 1 {
                     matrix def avg_days = J(3, event_length_post+event_length_pre+1, .)
@@ -167,8 +167,6 @@
                                         }
                                         matrix coln results_days = $temp_1 $temp_2 $temp_3 $temp_4 $temp_5 $temp_6 $temp_7 $temp_8 $temp_9 $temp_10 $temp_11
                                     }
-
-
 
                 local temp = date_specific
                 matlist results_days, lines(rowt) title("Individual Days [`temp']")

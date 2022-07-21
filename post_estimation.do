@@ -1,4 +1,6 @@
-	if price == "yes" {
+	
+    if price == "yes" {
+
     ** Variance & SD AR (estimation win)
 		if test_specific_date == "yes" {
         	summ ln_return_eua if est_win == 1
@@ -39,12 +41,12 @@
 				}
 			}
         }
-
     }
 
     if volume == "yes" {
+
             ** Variance & SD AR (estimation win)
-		if test_specific_date == "yes" {
+		if test_specific_date == "yes" { // (volume)
         	summ ln_return_eua_vol if est_win == 1
             capture drop AR_squared
             capture drop TSS
@@ -59,7 +61,7 @@
             capture drop AR_squared TSS 
 		}
 
-		else {
+		else { // (volume)
 			foreach x in bg cz dk fi de el hu it nl pl pt ro sk si es uk xx {
 				foreach y in main alt new rev follow leak canc parl nuc {
 					forvalues i = 1(1)10 {
@@ -90,7 +92,7 @@
 	** Variance & SD CAR (event window)
 		if test_specific_date == "yes" {
             * Full Event window
-                scalar var_CAR_ew = (event_length_pre + event_length_post+1)*var_AR
+                scalar var_CAR_ew = (event_length_pre + event_length_post + 1)*var_AR
                 scalar SD_CAR_ew = sqrt(var_CAR_ew)
 
             * Pre-event
@@ -113,7 +115,7 @@
 						capture confirm scalar `x'_`y'`i'_d
 						if _rc == 0 {
 	                        * Full Event window
-                                scalar var_CAR_ew_`x'_`y'`i' = (event_length_pre + event_length_post+1)*var_AR_`x'_`y'`i'
+                                scalar var_CAR_ew_`x'_`y'`i' = (event_length_pre + event_length_post + 1)*var_AR_`x'_`y'`i'
                                 scalar SD_CAR_ew_`x'_`y'`i' = sqrt(var_CAR_ew_`x'_`y'`i')
 
                             * Pre-event
@@ -137,6 +139,7 @@
 		
 		if test_specific_date != "yes" {
             * Pre-event
+                capture drop v_*
 
                 foreach x in bg cz dk fi de el hu it nl pl pt ro sk si es uk xx {
                     foreach y in main alt new rev follow leak canc parl nuc {
@@ -216,7 +219,7 @@
 		/*scalar level = 0.05
 		scalar cv = invttail(df, level/2)*/
 		
-        if test_specific_date == "yes" {
+    if test_specific_date == "yes" {
             * Pre-event
                 scalar t_pre = CAR_pre/SD_CAR_pre
                 scalar p_pre = ttail(df ,abs(t_pre))*2
@@ -243,9 +246,6 @@
                     scalar t_d`nom' = AR_d`nom'/SD_AR_event
                     scalar p_d`nom' = ttail(df ,abs(t_d`nom'))*2
 				}
-
-
-
 		}
 
         else {

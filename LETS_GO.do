@@ -15,10 +15,8 @@
 */
 
 *** PREP DATA
-	scalar treat_missing = 1 // 0: let Stata deal with missing values; 1: drop all observation for which there is a missing value in one of the explanatory variables or outcome variable; 2: XXXX; 3: XXX
+	scalar treat_missing = 1 // 0: let Stata deal with missing values; 1: drop all observation for which there is a missing value in one of the explanatory variables or outcome variable
 	quietly do data_prep
-
-	d
 
 *** DATA DESCRIPTIVE
 	quietly do data_descriptive
@@ -30,7 +28,7 @@
 		* Test one specific date only (independent of country exit dates)
 			scalar test_specific_date = "no" // "yes" when determining one specific date only; must be unequal "yes" when analysing countries' coal phase-outs
 
-			scalar date_specific = 20130416 // determine date to be tested if test_specific_date == "yes"
+			scalar date_specific = 20190125 // determine date to be tested if test_specific_date == "yes"
 
 		* Phase out announcements
 			quietly do phase_out
@@ -55,11 +53,11 @@
 
 *** Postestimation: Test significance
 	quietly do post_estimation
-	 do significance
+	do significance
 	
 *** Formatted Output
-	do output
-/*
+	//do output
+
 	/*
 	do lets_go_loop
 	*/
@@ -141,7 +139,7 @@ forvalues i=1(1)5 {
 	scalar est_length = 255
 	scalar no_windows = 479000 // max lies at approx 479 currently
 	scalar price = "yes"
-	scalar volume = "no"
+	scalar volume = "n"
 	quietly do forecast_errors
 /*
 	capture drop length
