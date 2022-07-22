@@ -26,9 +26,9 @@
 	** Define scalars/matrices
 
 		* Test one specific date only (independent of country exit dates)
-			scalar test_specific_date = "no" // "yes" when determining one specific date only; must be unequal "yes" when analysing countries' coal phase-outs
+			scalar test_specific_date = "n" // "yes" when determining one specific date only; must be unequal "yes" when analysing countries' coal phase-outs
 
-			scalar date_specific = 20190125 // determine date to be tested if test_specific_date == "yes"
+			scalar date_specific = 20181115 // determine date to be tested if test_specific_date == "yes"
 
 		* Phase out announcements
 			quietly do phase_out

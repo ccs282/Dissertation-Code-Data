@@ -106,7 +106,7 @@ if price == "yes" {
                     capture drop tempv 
                     summ trading_date if event_date_fe == 1
                     gen tempv = ln_return_eua if trading_date < (r(mean) - event_length_pre) 
-                    reg tempv L.tempv D_ln_return_oil D_ln_return_elec D_ln_return_gsci ln_return_vix D_ln_return_stoxx ln_return_diff_baa_aaa ln_return_ecb_spot_3m D_ln_return_gas D_ln_return_coal if est_win_fe == 1, robust
+                    reg tempv L.tempv ln_return_oil /*ln_return_elec D_ln_return_gsci D_ln_return_vix ln_return_stoxx ln_return_diff_baa_aaa ln_return_ecb_spot_3m*/ D_ln_return_gas D_ln_return_coal if est_win_fe == 1, robust
 
                     local ew_length = event_length_post + event_length_pre + 1
                     forvalues i = 1(1)`ew_length' {
@@ -166,7 +166,7 @@ if price == "yes" {
 
 
 
-if volume == "yes" {
+if volume == "yes" { // VOLUME
     capture drop MSFE*
 	capture drop RMSFE*
 	capture drop MAFE*
@@ -184,7 +184,7 @@ if volume == "yes" {
         local aux = tempp*7
     }
 
-	forvalues k = 0(7)`aux'{
+	forvalues k = 0(7)`aux'{ // VOLUME
 			
     	summ trading_date if date == 20090403
             ** estimation window + event window for forecast error
@@ -206,7 +206,7 @@ if volume == "yes" {
             foreach x in variables variables_2 variables_3 const_mean const_mean_trim zero_mean levels{
                 
                 ** generate predictions
-                if  "`x'" == "variables" {
+                if  "`x'" == "variables" { // VOLUME
                     capture drop tempv 
                     summ trading_date if event_date_fe == 1
                     gen tempv = ln_return_eua_vol if trading_date < (r(mean) - event_length_pre) 
@@ -221,7 +221,7 @@ if volume == "yes" {
                         replace NR_`x' = NR_`i' if trading_date == (r(mean) - event_length_pre -1 + `i')
                     }
                 }
-                else if  "`x'" == "variables_2" {
+                else if  "`x'" == "variables_2" { // VOLUME
                     capture drop tempv 
                     summ trading_date if event_date_fe == 1
                     gen tempv = ln_return_eua_vol if trading_date < (r(mean) - event_length_pre) 
@@ -236,7 +236,7 @@ if volume == "yes" {
                         replace NR_`x' = NR_`i' if trading_date == (r(mean) - event_length_pre -1 + `i')
                     }
                 }
-                if  "`x'" == "variables_3" {
+                else if  "`x'" == "variables_3" { // VOLUME
                     capture drop tempv 
                     summ trading_date if event_date_fe == 1
                     gen tempv = ln_return_eua_vol if trading_date < (r(mean) - event_length_pre) 
@@ -252,23 +252,23 @@ if volume == "yes" {
                     }
                 }
 
-                else if "`x'" == "const_mean" {
+                else if "`x'" == "const_mean" { // VOLUME
                     reg ln_return_eua_vol est_win_fe if est_win_fe == 1, robust noconst
                     gen NR_`x' = e(b)[1, 1]
                 }
 
-                else if "`x'" == "const_mean_trim" {
+                else if "`x'" == "const_mean_trim" { // VOLUME
                     reg ln_return_eua_vol est_win_fe if est_win_fe == 1, robust noconst
                     trimmean ln_return_eua_vol if est_win_fe == 1, percent(20)
                     gen NR_`x' = r(tmean20)
                 }
 
-                else if "`x'" == "zero_mean" {
+                else if "`x'" == "zero_mean" { // VOLUME
                     gen NR_`x' = 0
 
                 }
 
-                else if "`x'" == "levels" {
+                else if "`x'" == "levels" { // VOLUME
                     capture drop tempv 
                     summ trading_date if event_date_fe == 1
                     gen tempv = eua_vol if trading_date < (r(mean) - event_length_pre) 
@@ -285,14 +285,14 @@ if volume == "yes" {
                 }
 
 
-                ** yhat, MSFE, RMSFE, MAFE
+                ** yhat, MSFE, RMSFE, MAFE // VOLUME
 
                 capture gen yhat_`x' = . 
                 replace yhat_`x' = NR_`x' if ew_fe == 1
                     
                 capture drop NR_*
 
-                if "`x'" != "levels" {
+                if "`x'" != "levels" { // VOLUME
                     capture drop fe_`x' 
                     gen fe_`x' = yhat_`x' - ln_return_eua_vol if ew_fe == 1
                 }
