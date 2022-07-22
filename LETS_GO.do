@@ -86,7 +86,14 @@ foreach var of varlist ln_return_coal D_ln_return_coal ln_return_gas D_ln_return
 // problematic (KPSS) for full sample: coal**; gas*
 // problematic for greater than 2019: oil*; GSCI**; STOXX*; 
 
+foreach var of global ln_return_explanatory {
+	xcorr 
+}
+xcorr ln_return_coal ln_return_gas, table lags(0)
+pwcorr ln_return_oil ln_return_coal ln_return_gas ln_return_elec D_ln_return_gsci ln_return_vix ln_return_stoxx ln_return_diff_baa_aaa ln_return_ecb_spot_3m, star(0.05)
 
+
+// ln_return_oil ln_return_coal ln_return_gas ln_return_elec ln_return_gsci ln_return_vix ln_return_stoxx ln_return_diff_baa_aaa ln_return_ecb_spot_3m
 /*	
 foreach var of varlist oil coal gas elec gsci vix stoxx diff_baa_aaa ecb_spot_3m{
 	summ ln_return_`var' if date > 20080313 & date < 20140501, d
