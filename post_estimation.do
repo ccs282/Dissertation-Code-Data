@@ -45,7 +45,7 @@
 
     if volume == "yes" {
 
-            ** Variance & SD AR (estimation win)
+            ** Variance & SD AR (estimation win) // volume
 		if test_specific_date == "yes" { // (volume)
         	summ ln_return_eua_vol if est_win == 1
             capture drop AR_squared
